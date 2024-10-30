@@ -43,16 +43,16 @@ FIRMWARE.PREBUILT.PATH=$(DOWNLOADS.DIR)/$(FIRMWARE.PREBUILT.FILENAME)
 FIRMWARE.BIN=$(FIRMWARE.PREBUILT.PATH)
 APPIMAGE.SCRIPT=$(SCRIPTS.DIR)/appimageToHex.py
 
-ci: bootstrap app
-
-bootstrap: .FORCE
+ci: firmware firmware.convert.appimage.to.hex app
 
 firmware: .FORCE
 	rm -f $(FIRMWARE.PREBUILT.PATH)
 	mkdir -p $(DOWNLOADS.DIR)
 	cd $(DOWNLOADS.DIR) && wget $(FIRMWARE.PREBUILT.URL)
 	mkdir -p $(INSTALLED.HOST.DIR)/include
-	cd $(INSTALLED.HOST.DIR)/include && $(APPIMAGE.SCRIPT) $(FIRMWARE.PREBUILT.PATH)
+
+firmware.convert.appimage.to.hex: .FORCE
+	cd $(INSTALLED.HOST.DIR)/include && python3 $(APPIMAGE.SCRIPT) $(FIRMWARE.PREBUILT.PATH)
 
 ctags: .FORCE
 	cd $(BASE.DIR) && ctags -R --exclude=.git --exclude=downloads --exclude=installed.host --exclude=installed.target --exclude=documents  --exclude=build.*  .
