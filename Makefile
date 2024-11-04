@@ -43,7 +43,7 @@ FIRMWARE.BIN=$(FIRMWARE.PREBUILT.PATH)
 APPIMAGE.SCRIPT=$(SCRIPTS.DIR)/appimageToHex.py
 HEADERS.DIR=$(BASE.DIR)/ti_headers
 
-ci: firmware firmware.convert.appimage.to.hex ti.headers libmpsse build
+ci: firmware firmware.convert.appimage.to.hex libmpsse build
 
 ti.headers: .FORCE
 	mkdir -p $(INSTALLED.HOST.DIR)/include/kernel/dpl && cp $(HEADERS.DIR)/DebugP.h $(INSTALLED.HOST.DIR)/include/kernel/dpl
