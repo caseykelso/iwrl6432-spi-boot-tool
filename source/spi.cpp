@@ -14,6 +14,7 @@
 #include <linux/types.h>
 #include <linux/spi/spidev.h>
 #include <asm-generic/ioctl.h>
+#include <gpiod.h>
 
 /* Size of Continuous Image Download Command */
 #define continuousImageDownloadCMDMsgSize   (32U)
@@ -63,7 +64,33 @@ uint32_t gMcspiRxBuffer1[8]={0};
 uint32_t gMcspiRxBuffer2[4]={0};
 uint32_t gMcspiRxBuffer3[4]={0};
 
-bool spi_setup(spi_config_t spi_config)
+void gpio_init(struct gpiod_chip **chip, struct gpiod_line **line, uint8_t gpio_pin, std::string chip_name)
+{
+	int result = 0;
+
+    *chip        = gpiod_chip_open_by_name(chip_name.c_str());
+
+	if (NULL == *chip)
+	{
+		throw std::runtime_error("ERROR: Could not open GPIOD chip");
+	}
+
+    *line        = gpiod_chip_get_line(*chip, gpio_pin);
+	result = gpiod_line_request_input(*line, "spibusy");
+
+	if (result < 0)
+	{
+		throw std::runtime_error("ERROR: Could not set SPI_BUSY GPIO as a input.");
+	}
+}
+
+void gpio_free(struct gpiod_chip **chip, struct gpiod_line **line)
+{
+	gpiod_line_release(*line);
+	gpiod_chip_close(*chip);
+}
+
+bool spi_init(spi_config_t spi_config)
 {
     bool          result       = true;
 	int           spi_result   = 0;
@@ -340,6 +367,9 @@ void *spibooting(void *args)
 
 int main(void)
 {
+	struct gpiod_chip *chip;
+	struct gpiod_line *spi_busy;
+
     int      exit_code         = 0;
 	spi_config_t spi_config    = {};
 	spi_config.mode            = 0;
@@ -347,15 +377,23 @@ int main(void)
 	spi_config.bits_per_word   = 8;
 	spi_config.device          = "/dev/spidev0.1";
 	spi_config.file_descriptor = 0;
+	const uint8_t SPI_BUSY_PIN = 22;
+	const std::string gpiod_chip_name("gpiochip0");
 
 	try 
 	{
-	   spi_setup(spi_config);
+	   spi_init(spi_config);
+	   gpio_init(&chip, &spi_busy, SPI_BUSY_PIN, gpiod_chip_name);
 	} 
 	catch(std::exception &e)
 	{
 		exit_code = -1;
 		std::cerr << e.what() << std::endl;
+	}
+
+	if (exit_code == 0)
+	{
+		gpio_free(&chip, &spi_busy);
 	}
 
     close(spi_config.file_descriptor); //TODO: consider if this can be called twice in an error state, and if that is safe
