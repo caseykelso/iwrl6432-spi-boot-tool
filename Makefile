@@ -17,6 +17,8 @@ else
 INSTALLED.HOST.DIR=$(INSTALLED_HOST_DIR)
 endif
 
+CMAKE.TOOLCHAIN.FILE.RPI4=$(BASE.DIR)/arm-linux-gnueabihf.cmake
+
 CMAKE.BIN=/usr/bin/cmake
 BUILD.DIR=$(BASE.DIR)/build
 GPIO.BIN=$(INSTALLED.HOST.DIR)/bin/gpio-ftdi
@@ -39,9 +41,16 @@ ti.headers: .FORCE
 	mkdir -p $(INSTALLED.HOST.DIR)/include/kernel/dpl && cp $(HEADERS.DIR)/AddrTranslateP.h $(INSTALLED.HOST.DIR)/include/kernel/dpl
 	mkdir -p $(INSTALLED.HOST.DIR)/include/drivers/hw_include && cp $(HEADERS.DIR)/soc_config.h $(INSTALLED.HOST.DIR)/include/drivers/hw_include
 
-build: .FORCE
+build.x86: .FORCE
 	rm -rf $(BUILD.DIR) && mkdir -p $(BUILD.DIR)
 	cd $(BUILD.DIR) && $(CMAKE.BIN) -DCMAKE_PREFIX_PATH=$(INSTALLED.HOST.DIR) $(SOURCE.DIR) && make
+
+build.rpi4: .FORCE
+	rm -rf $(BUILD.DIR) && mkdir -p $(BUILD.DIR)
+	cd $(BUILD.DIR) && $(CMAKE.BIN) -DCMAKE_TOOLCHAIN_FILE=$(CMAKE.TOOLCHAIN.FILE.RPI4) -DCMAKE_PREFIX_PATH=$(INSTALLED.HOST.DIR) $(SOURCE.DIR) && make
+
+
+
 
 firmware: .FORCE
 	rm -f $(FIRMWARE.PREBUILT.PATH)
