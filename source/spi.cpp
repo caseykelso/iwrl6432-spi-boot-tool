@@ -256,3 +256,8 @@ void *spibooting(void *args)
 #endif
     return NULL;
 }
+
+int main(void)
+{
+}
+

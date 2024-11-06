@@ -22,19 +22,6 @@ BUILD.DIR=$(BASE.DIR)/build
 GPIO.BIN=$(INSTALLED.HOST.DIR)/bin/gpio-ftdi
 SPI.BIN=$(INSTALLED.HOST.DIR)/bin/iwrflasher-spi
 
-FTDI.LIBMPSSE.VERSION=1.0.5
-FTDI.LIBMPSSE.PREFIX=LibMPSSE_$(FTDI.LIBMPSSE.VERSION)
-FTDI.LIBMPSSE.ARCHIVE=$(FTDI.LIBMPSSE.PREFIX).zip
-FTDI.LIBMPSSE.LINUX.X86.ARCHIVE=libmpsse-x86_64-$(FTDI.LIBMPSSE.VERSION).tgz
-FTDI.LIBMPSSE.URL=https://buildroot-sources.s3.amazonaws.com/$(FTDI.LIBMPSSE.ARCHIVE)
-FTDI.LIBMPSSE.DIR=$(DOWNLOADS.DIR)/$(FTDI.LIBMPSSE.PREFIX)
-
-FTDI.D2XX.VERSION=1.4.27
-FTDI.D2XX.PREFIX=libftd2xx-x86_64-$(FTDI.D2XX.VERSION)
-FTDI.D2XX.ARCHIVE=$(FTDI.D2XX.PREFIX).tgz
-FTDI.D2XX.URL=https://buildroot-sources.s3.amazonaws.com/$(FTDI.D2XX.ARCHIVE)
-FTDI.D2XX.DIR=$(DOWNLOADS.DIR)/$(FTDI.D2XX.PREFIX)
-
 FIRMWARE.PREBUILT.FILENAME=motion_and_presence_detection_demo.debug.appimage
 FIRMWARE.PREBUILT.URL=https://buildroot-sources.s3.us-east-1.amazonaws.com/$(FIRMWARE.PREBUILT.FILENAME)
 FIRMWARE.PREBUILT.PATH=$(DOWNLOADS.DIR)/$(FIRMWARE.PREBUILT.FILENAME)
@@ -43,7 +30,7 @@ FIRMWARE.BIN=$(FIRMWARE.PREBUILT.PATH)
 APPIMAGE.SCRIPT=$(SCRIPTS.DIR)/appimageToHex.py
 HEADERS.DIR=$(BASE.DIR)/ti_headers
 
-ci: firmware firmware.convert.appimage.to.hex libmpsse build
+ci: firmware firmware.convert.appimage.to.hex build
 
 ti.headers: .FORCE
 	mkdir -p $(INSTALLED.HOST.DIR)/include/kernel/dpl && cp $(HEADERS.DIR)/DebugP.h $(INSTALLED.HOST.DIR)/include/kernel/dpl
@@ -55,34 +42,6 @@ ti.headers: .FORCE
 build: .FORCE
 	rm -rf $(BUILD.DIR) && mkdir -p $(BUILD.DIR)
 	cd $(BUILD.DIR) && $(CMAKE.BIN) -DCMAKE_PREFIX_PATH=$(INSTALLED.HOST.DIR) $(SOURCE.DIR) && make
-
-ftdi.d2xx: .FORCE
-	rm -rf $(FTDI.D2XX.DIR)
-	rm -f $(DOWNLOADS.DIR)/$(FTDI.D2XX.ARCHIVE)
-	mkdir -p $(INSTALLED.HOST.DIR)/lib
-	mkdir -p $(INSTALLED.HOST.DIR)/linclude
-	mkdir -p $(DOWNLOADS.DIR)
-	mkdir -p $(FTDI.D2XX.DIR)
-	cd $(DOWNLOADS.DIR) && wget $(FTDI.D2XX.URL) && cd $(FTDI.D2XX.DIR) && tar xvf ../$(FTDI.D2XX.ARCHIVE)
-	cd $(FTDI.D2XX.DIR)/release/build && cp libftd2xx.so.1.4.27 $(INSTALLED.HOST.DIR)/lib && ln -sf libftd2xx.so.$(FTDI.D2XX.VERSION) $(INSTALLED.HOST.DIR)/lib/libftd2xx.so
-
-
-ftdi.libmpsse: .FORCE
-	rm -rf $(FTDI.LIBMPSSE.DIR)
-	rm -f $(DOWNLOADS.DIR)/$(FTDI.LIBMPSSE.ARCHIVE)
-	mkdir -p $(INSTALLED.HOST.DIR)/lib
-	mkdir -p $(INSTALLED.HOST.DIR)/linclude
-	mkdir -p $(DOWNLOADS.DIR)
-	cd $(DOWNLOADS.DIR) && wget $(FTDI.LIBMPSSE.URL) && unzip $(FTDI.LIBMPSSE.ARCHIVE)
-	cd $(FTDI.LIBMPSSE.DIR)/Linux && tar xvf $(FTDI.LIBMPSSE.LINUX.X86.ARCHIVE) && cp release/build/libmpsse.so.$(FTDI.LIBMPSSE.VERSION) $(INSTALLED.HOST.DIR)/lib && ln -sf libmpsse.so.$(FTDI.LIBMPSSE.VERSION) $(INSTALLED.HOST.DIR)/lib/libmpsse.so && cp release/build/libmpsse_spi.h release/libftd2xx/*.h $(INSTALLED.HOST.DIR)/include
-
-
-
-libmpsse: .FORCE
-	mkdir -p $(DOWNLOADS.DIR)
-	rm -rf $(DOWNLOADS.DIR)/libmpsse
-	cd $(DOWNLOADS.DIR) && git clone git@github.com:caseykelso/libmpsse.git -b master
-	cd $(DOWNLOADS.DIR)/libmpsse/src && CFLAGS=-I/usr/include/libftdi1 ./configure --disable-python --prefix=$(INSTALLED.HOST.DIR) && make -j8 && make install
 
 firmware: .FORCE
 	rm -f $(FIRMWARE.PREBUILT.PATH)
