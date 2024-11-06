@@ -32,7 +32,7 @@ FIRMWARE.BIN=$(FIRMWARE.PREBUILT.PATH)
 APPIMAGE.SCRIPT=$(SCRIPTS.DIR)/appimageToHex.py
 HEADERS.DIR=$(BASE.DIR)/ti_headers
 
-ci: firmware firmware.convert.appimage.to.hex build
+ci: firmware firmware.convert.appimage.to.hex build.x86
 
 ti.headers: .FORCE
 	mkdir -p $(INSTALLED.HOST.DIR)/include/kernel/dpl && cp $(HEADERS.DIR)/DebugP.h $(INSTALLED.HOST.DIR)/include/kernel/dpl
@@ -48,9 +48,6 @@ build.x86: .FORCE
 build.rpi4: .FORCE
 	rm -rf $(BUILD.DIR) && mkdir -p $(BUILD.DIR)
 	cd $(BUILD.DIR) && $(CMAKE.BIN) -DCMAKE_TOOLCHAIN_FILE=$(CMAKE.TOOLCHAIN.FILE.RPI4) -DCMAKE_PREFIX_PATH=$(INSTALLED.HOST.DIR) $(SOURCE.DIR) && make
-
-
-
 
 firmware: .FORCE
 	rm -f $(FIRMWARE.PREBUILT.PATH)
