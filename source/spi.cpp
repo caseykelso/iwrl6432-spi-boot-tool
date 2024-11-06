@@ -3,6 +3,7 @@
 #include <iostream>
 #include <stdio.h>
 #include <unistd.h>
+#include <stdexcept>
 #include <errno.h>
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -32,7 +33,14 @@
 #define APP_CRC_BIT_SWAP                    1
 #define APP_CRC_BYTE_SWAP                   0
 
-char spi_device[] = "/dev/spidev1.0";
+typedef struct {
+	uint8_t mode;
+	uint8_t bits_per_word;
+	uint32_t speed;
+	uint16_t delay;
+	std::string device;
+	int file_descriptor;
+} spi_config_t;
 
 uint32_t crcValue=0;
 
@@ -55,9 +63,70 @@ uint32_t gMcspiRxBuffer1[8]={0};
 uint32_t gMcspiRxBuffer2[4]={0};
 uint32_t gMcspiRxBuffer3[4]={0};
 
-bool spi_setup(int file_descriptor)
+bool spi_setup(spi_config_t spi_config)
 {
-    bool result = false;
+    bool          result       = true;
+	int           spi_result   = 0;
+	const int32_t SPI_ERROR    = -1;
+
+    spi_config.file_descriptor = open(spi_config.device.c_str(), O_RDWR);
+    if (0 > spi_config.file_descriptor)
+	{
+		close(spi_config.file_descriptor);
+		throw std::runtime_error("ERROR: Could not open SPI device.");
+	}
+
+    spi_result = ioctl(spi_config.file_descriptor, SPI_IOC_WR_MODE, &spi_config.mode);
+
+	if (SPI_ERROR == spi_result)
+	{
+		result = false;
+		throw std::runtime_error("ERROR: Cannot set SPI mode.");
+	}
+
+	spi_result = ioctl(spi_config.file_descriptor, SPI_IOC_RD_MODE, &spi_config.mode);
+
+	if (SPI_ERROR == spi_result)
+	{
+		result = false;
+		throw std::runtime_error("ERROR: Cannot get SPI mode.");
+	}
+
+	spi_result = ioctl(spi_config.file_descriptor, SPI_IOC_WR_BITS_PER_WORD, &spi_config.bits_per_word);
+
+	if (SPI_ERROR == spi_result)
+	{
+		result = false;
+		throw std::runtime_error("ERROR: Cannot set SPI bits per word.");
+	}
+
+	spi_result = ioctl(spi_config.file_descriptor, SPI_IOC_RD_BITS_PER_WORD, &spi_config.bits_per_word);
+
+	if (SPI_ERROR == spi_result)
+	{
+		result = false;
+		throw std::runtime_error("ERROR: Cannot get SPI bits per word.");
+	}
+
+	spi_result = ioctl(spi_config.file_descriptor, SPI_IOC_WR_MAX_SPEED_HZ, &spi_config.speed);
+
+	if (SPI_ERROR == spi_result)
+	{
+		result = false;
+		throw std::runtime_error("ERROR: Cannot set SPI bus max speed.");
+	}
+
+	spi_result = ioctl(spi_config.file_descriptor, SPI_IOC_RD_MAX_SPEED_HZ, &spi_config.speed);
+
+	if (SPI_ERROR == spi_result)
+	{
+		result = false;
+		throw std::runtime_error("ERROR: Cannot get SPI bus max speed.");
+	}
+
+	std::cout << "spi mode: " << std::hex << spi_config.mode << std::endl;
+	std::cout << "spi bits per word: " << std::hex << spi_config.bits_per_word << std::endl;
+	std::cout << "spi max speed: " << spi_config.speed/1000 << " KHz" << std::endl;
 
     return result;
 }
@@ -271,23 +340,25 @@ void *spibooting(void *args)
 
 int main(void)
 {
-    int exit_code = -1;
-    int fd        = 0;
+    int      exit_code         = 0;
+	uint32_t spi_mode          = 0;
+	uint8_t  spi_bits          = 8;
+	uint32_t spi_speed         = 500000;
+	spi_config_t spi_config    = {};
+	spi_config.device          = "/dev/spidev1.0";
+	spi_config.file_descriptor = 0;
 
-    fd = open(spi_device, O_RDWR);
+	try 
+	{
+	   spi_setup(spi_config);
+	} 
+	catch(std::exception &e)
+	{
+		exit_code = -1;
+		std::cerr << e.what() << std::endl;
+	}
 
-    if (fd >= 0)
-    {
-        if (spi_setup(fd) > 0)
-        {
-            exit_code = 0;
-        }
-        else
-        {
-            close(fd);
-        }
-    }
-
+    close(spi_config.file_descriptor); //TODO: consider if this can be called twice in an error state, and if that is safe
     return exit_code;
 
 }
