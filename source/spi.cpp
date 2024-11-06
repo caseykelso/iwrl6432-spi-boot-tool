@@ -126,7 +126,7 @@ bool spi_setup(spi_config_t spi_config)
 
 	std::cout << "spi mode: " << std::hex << spi_config.mode << std::endl;
 	std::cout << "spi bits per word: " << std::hex << spi_config.bits_per_word << std::endl;
-	std::cout << "spi max speed: " << spi_config.speed/1000 << " KHz" << std::endl;
+	std::cout << "spi max speed: " << std::dec << spi_config.speed/1000 << " KHz" << std::endl;
 
     return result;
 }
@@ -341,11 +341,11 @@ void *spibooting(void *args)
 int main(void)
 {
     int      exit_code         = 0;
-	uint32_t spi_mode          = 0;
-	uint8_t  spi_bits          = 8;
-	uint32_t spi_speed         = 500000;
 	spi_config_t spi_config    = {};
-	spi_config.device          = "/dev/spidev1.0";
+	spi_config.mode            = 0;
+	spi_config.speed           = 500000;
+	spi_config.bits_per_word   = 8;
+	spi_config.device          = "/dev/spidev0.1";
 	spi_config.file_descriptor = 0;
 
 	try 
