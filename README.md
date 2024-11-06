@@ -2,7 +2,7 @@
 
 ## Setup Ubuntu 24.04 Build Environment
 ```bash
-sudo apt install git build-essential cmake libdocopt-dev libuv1-dev flex bison libgtest-dev spi-tools gcc-arm-linux-gnueabihf g++-arm-linux-gnueabihf arm-linux-gnueabihf-g++
+sudo apt install git build-essential cmake libdocopt-dev libuv1-dev flex bison libgtest-dev spi-tools g++-aarch64-linux-gnu
 ```
 ## Initial Build
 ```bash
