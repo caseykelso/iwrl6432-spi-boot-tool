@@ -1,14 +1,18 @@
 #include <stdint.h>
-//#include <drivers/gpio.h>
-//#include <drivers/crc.h>
 #include <stdlib.h>
 #include <iostream>
-//#include <kernel/dpl/DebugP.h>
-//#include <kernel/dpl/AddrTranslateP.h>
-//#include "ti_drivers_config.h"
-//#include "ti_drivers_open_close.h"
-//#include "ti_board_open_close.h"
+#include <stdio.h>
+#include <unistd.h>
+#include <errno.h>
+#include <sys/types.h>
+#include <sys/stat.h>
 #include "appimagedata.h"
+#include <fcntl.h>
+#include <asm-generic/ioctl.h>
+#include <sys/ioctl.h>
+#include <linux/types.h>
+#include <linux/spi/spidev.h>
+#include <asm-generic/ioctl.h>
 
 /* Size of Continuous Image Download Command */
 #define continuousImageDownloadCMDMsgSize   (32U)
@@ -28,6 +32,7 @@
 #define APP_CRC_BIT_SWAP                    1
 #define APP_CRC_BYTE_SWAP                   0
 
+char spi_device[] = "/dev/spidev1.0";
 
 uint32_t crcValue=0;
 
@@ -49,6 +54,13 @@ uint32_t SwitchToApplicationRESP[] = {0x0000,0x0000,0x0000,0x0000}; // SWITCH_TO
 uint32_t gMcspiRxBuffer1[8]={0};
 uint32_t gMcspiRxBuffer2[4]={0};
 uint32_t gMcspiRxBuffer3[4]={0};
+
+bool spi_setup(int file_descriptor)
+{
+    bool result = false;
+
+    return result;
+}
 
 /* CRC Calculation for Continuous Image Download Command */
 void calculatecrc32(void *args)
@@ -259,5 +271,24 @@ void *spibooting(void *args)
 
 int main(void)
 {
+    int exit_code = -1;
+    int fd        = 0;
+
+    fd = open(spi_device, O_RDWR);
+
+    if (fd >= 0)
+    {
+        if (spi_setup(fd) > 0)
+        {
+            exit_code = 0;
+        }
+        else
+        {
+            close(fd);
+        }
+    }
+
+    return exit_code;
+
 }
 
