@@ -104,7 +104,7 @@ void transfer(uint8_t const *tx, uint8_t const *rx, uint32_t length, spi_config_
 		.bits_per_word = config.bits_per_word,
 	};
 
-    result = ioctl(config.file_descriptor, SPI_IOC_MESSAGE(4), &tr); 
+    result = ioctl(config.file_descriptor, SPI_IOC_MESSAGE(1), &tr); 
 
 	if (result < 1)
 	{
@@ -383,7 +383,7 @@ int main(void)
 	struct gpiod_chip *chip;
 	struct gpiod_line *spi_busy;
 
-    int      exit_code         = 0;
+	int          exit_code     = 0;
 	spi_config_t spi_config    = {};
 	spi_config.mode            = 0;
 	spi_config.speed           = 500000;
@@ -391,6 +391,7 @@ int main(void)
 	spi_config.device          = "/dev/spidev0.1";
 	spi_config.file_descriptor = 0;
 	const uint8_t SPI_BUSY_PIN = 22;
+
 	const std::string gpiod_chip_name("gpiochip0");
 
 	try 
@@ -411,7 +412,7 @@ int main(void)
 
 	uint8_t tx[100];
 	uint8_t rx[100];
-	transfer(tx, rx, 1, spi_config);
+	transfer(tx, rx, 8, spi_config);
 
     close(spi_config.file_descriptor); //TODO: consider if this can be called twice in an error state, and if that is safe
     return exit_code;
