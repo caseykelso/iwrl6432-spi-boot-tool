@@ -97,6 +97,7 @@ bool spi_init(spi_config_t spi_config)
 	const int32_t SPI_ERROR    = -1;
 
     spi_config.file_descriptor = open(spi_config.device.c_str(), O_RDWR);
+
     if (0 > spi_config.file_descriptor)
 	{
 		close(spi_config.file_descriptor);
@@ -151,8 +152,8 @@ bool spi_init(spi_config_t spi_config)
 		throw std::runtime_error("ERROR: Cannot get SPI bus max speed.");
 	}
 
-	std::cout << "spi mode: " << std::hex << spi_config.mode << std::endl;
-	std::cout << "spi bits per word: " << std::hex << spi_config.bits_per_word << std::endl;
+	std::cout << "spi mode: " << std::hex << (unsigned)spi_config.mode << std::endl;
+	std::cout << "spi bits per word: " << std::hex << (unsigned)spi_config.bits_per_word << std::endl;
 	std::cout << "spi max speed: " << std::dec << spi_config.speed/1000 << " KHz" << std::endl;
 
     return result;
