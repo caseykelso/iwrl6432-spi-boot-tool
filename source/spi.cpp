@@ -90,6 +90,28 @@ void gpio_free(struct gpiod_chip **chip, struct gpiod_line **line)
 	gpiod_chip_close(*chip);
 }
 
+void transfer(uint8_t const *tx, uint8_t const *rx, uint32_t length, spi_config_t config)
+{
+	int result = 0;
+
+	struct spi_ioc_transfer tr = 
+	{
+		.tx_buf        = (unsigned long)tx,
+		.rx_buf        = (unsigned long)rx,
+		.len           = length,
+		.speed_hz      = config.speed,
+		.delay_usecs   = config.delay,
+		.bits_per_word = config.bits_per_word,
+	};
+
+    result = ioctl(config.file_descriptor, SPI_IOC_MESSAGE(4), &tr); 
+
+	if (result < 1)
+	{
+		throw std::runtime_error("ERROR: Cannot send SPI message, error number: "+ std::to_string(result));
+	}
+}
+
 bool spi_init(spi_config_t spi_config)
 {
     bool          result       = true;
@@ -213,9 +235,6 @@ void *spibooting(void *args)
     int32_t  transferOK;
   //  MCSPI_Transaction  spiTransaction;
     
- //  Drivers_open();
- //   Board_driversOpen();
-    
     /* Enable 256 kb shared RAM for APPSS */
  //   HW_WR_REG32(CSL_APP_CTRL_U_BASE+CSL_APP_CTRL_APPSS_SHARED_MEM_CLK_GATE,0xA);
 //    CSL_REG32_FINS(CSL_TOP_PRCM_U_BASE+CSL_TOP_PRCM_HWA_PD_MEM_SHARE_REG,TOP_PRCM_HWA_PD_MEM_SHARE_REG_HWA_PD_MEM_SHARE_REG_HWA_PD_MEM_SHARE_APPSS_CONFIG, 0x3F);
@@ -223,18 +242,11 @@ void *spibooting(void *args)
 	std::cout << "Booting via SPI ..." << std::endl;
     std::cout << "Transferring appimage via SPI ..." << std::endl;
     
-    /* Get address after translation translate */
-//    gpioBaseAddr = (uint32_t) AddrTranslateP_getLocalAddr(CSL_APP_GIO_U_BASE);
-    pinNum       = 0; //SPI_BUSY_PIN;
-    
-    /* Setting the input data direction associated with a GPIO Pin. */
-//    GPIO_setDirMode(gpioBaseAddr, pinNum, SPI_BUSY_DIR);
-
     /* calculation of CRC for Continuous Image Download Command */
     calculatecrc32(NULL);
     
     continuousImageDownloadCMD[0]=crcValue;
-#if 0 
+#if 0
     dummyData = malloc(sizeof(uint32_t) * padding);
     for(int i=0;i<padding;i++){
         dummyData[i]=0;
@@ -396,6 +408,10 @@ int main(void)
 	{
 		gpio_free(&chip, &spi_busy);
 	}
+
+	uint8_t tx[100];
+	uint8_t rx[100];
+	transfer(tx, rx, 1, spi_config);
 
     close(spi_config.file_descriptor); //TODO: consider if this can be called twice in an error state, and if that is safe
     return exit_code;
