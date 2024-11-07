@@ -4,6 +4,8 @@
 Update the contents of your /etc/apt/sources.list to match the sources.list in this repo.
 
 ```bash
+sudo dpkg --add-architecture arm64
+sudo dpkg --print-foreign-architectures
 sudo apt update -y
 sudo apt install git build-essential cmake libdocopt-dev libuv1-dev flex bison libgtest-dev spi-tools gcc-11-aarch64-linux-gnu g++-11-aarch64-linux-gnu libgpiod-dev libgpiod-dev:arm64
 ```
