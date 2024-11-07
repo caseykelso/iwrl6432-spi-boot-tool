@@ -231,7 +231,7 @@ void calculatecrc32(void *args)
 
 
 /* Transferring appimage via SPI */
-void *spibooting(void *args)
+void spiboot()
 {   
     uint32_t padded_data   = 16-(Size%16); //Extra bytes to make image size multiple of 16 
     uint32_t padding       = padded_data/4;
@@ -239,11 +239,6 @@ void *spibooting(void *args)
     uint32_t gpioBaseAddr, pinNum;
     volatile uint32_t SPIBusy;
     int32_t  transferOK;
-  //  MCSPI_Transaction  spiTransaction;
-    
-    /* Enable 256 kb shared RAM for APPSS */
- //   HW_WR_REG32(CSL_APP_CTRL_U_BASE+CSL_APP_CTRL_APPSS_SHARED_MEM_CLK_GATE,0xA);
-//    CSL_REG32_FINS(CSL_TOP_PRCM_U_BASE+CSL_TOP_PRCM_HWA_PD_MEM_SHARE_REG,TOP_PRCM_HWA_PD_MEM_SHARE_REG_HWA_PD_MEM_SHARE_REG_HWA_PD_MEM_SHARE_APPSS_CONFIG, 0x3F);
 
 	std::cout << "Booting via SPI ..." << std::endl;
     std::cout << "Transferring appimage via SPI ..." << std::endl;
@@ -252,12 +247,12 @@ void *spibooting(void *args)
     calculatecrc32(NULL);
     
     continuousImageDownloadCMD[0]=crcValue;
-#if 0
-    dummyData = malloc(sizeof(uint32_t) * padding);
+
+    dummyData = (uint32_t*)malloc(sizeof(uint32_t) * padding);
     for(int i=0;i<padding;i++){
         dummyData[i]=0;
     }
-#endif
+
     /* Initiate transfer for Continuous Image Download Command */
 #if 0
 	MCSPI_Transaction_init(&spiTransaction);
@@ -271,6 +266,9 @@ void *spibooting(void *args)
     
     transferOK = MCSPI_transfer(gMcspiHandle[CONFIG_MCSPI0], &spiTransaction);
 #endif
+
+    
+
     /* Waiting for SPIBusy to go low */
     SPIBusy = 1;
 #if 0 
@@ -381,7 +379,7 @@ void *spibooting(void *args)
     Board_driversClose();
     Drivers_close();
 #endif
-    return NULL;
+    //return NULL;
 }
 
 int main(void)
@@ -416,13 +414,16 @@ int main(void)
 	{
 		gpio_free(&chip, &spi_busy);
 	}
-
+#if 0
 	uint8_t tx[100];
 	uint8_t rx[100];
 	for(uint8_t i = 0; i < 20; ++i)
 	{
 	    transfer(tx, rx, 8, spi_config);
 	}
+#endif
+
+	spiboot();
 
     close(spi_config.file_descriptor); //TODO: consider if this can be called twice in an error state, and if that is safe
     return exit_code;
