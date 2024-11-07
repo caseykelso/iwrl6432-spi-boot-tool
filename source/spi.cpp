@@ -97,7 +97,7 @@ void transfer(uint8_t const *tx, uint8_t const *rx, uint32_t length, spi_config_
 	struct spi_ioc_transfer tr = 
 	{
 		.tx_buf        = (unsigned long)tx,
-		.rx_buf        = (unsigned long)rx,
+//		.rx_buf        = (unsigned long)rx,
 		.len           = length,
 		.speed_hz      = config.speed,
 		.delay_usecs   = config.delay,
@@ -110,9 +110,15 @@ void transfer(uint8_t const *tx, uint8_t const *rx, uint32_t length, spi_config_
 	{
 		throw std::runtime_error("ERROR: Cannot send SPI message, error number: "+ std::to_string(result));
 	}
+	else
+	{
+	    std::cout << unsigned(result) << std::endl;
+	}
+
+
 }
 
-bool spi_init(spi_config_t spi_config)
+bool spi_init(spi_config_t &spi_config)
 {
     bool          result       = true;
 	int           spi_result   = 0;
@@ -390,6 +396,7 @@ int main(void)
 	spi_config.bits_per_word   = 8;
 	spi_config.device          = "/dev/spidev0.1";
 	spi_config.file_descriptor = 0;
+	spi_config.delay           = 10; //10 microseconds
 	const uint8_t SPI_BUSY_PIN = 22;
 
 	const std::string gpiod_chip_name("gpiochip0");
@@ -412,7 +419,10 @@ int main(void)
 
 	uint8_t tx[100];
 	uint8_t rx[100];
-	transfer(tx, rx, 8, spi_config);
+	for(uint8_t i = 0; i < 20; ++i)
+	{
+	    transfer(tx, rx, 8, spi_config);
+	}
 
     close(spi_config.file_descriptor); //TODO: consider if this can be called twice in an error state, and if that is safe
     return exit_code;
