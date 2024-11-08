@@ -231,7 +231,7 @@ void calculatecrc32(void *args)
 
 
 /* Transferring appimage via SPI */
-void spiboot()
+void spiboot(spi_config_t &config)
 {   
     uint32_t padded_data   = 16-(Size%16); //Extra bytes to make image size multiple of 16 
     uint32_t padding       = padded_data/4;
@@ -253,12 +253,18 @@ void spiboot()
         dummyData[i]=0;
     }
 
+	if (NULL == dummyData)
+	{
+		throw std::runtime_error("ERROR: failed to allocate SPI dummy data.");
+	}
+
     /* Initiate transfer for Continuous Image Download Command */
+	uint32_t size = continuousImageDownloadCMDMsgSize; // / 2*(config.length/config.bits_per_word;
+    transfer((uint8_t*)continuousImageDownloadCMD, NULL, size, config); 
+	std::cout << "transfer: " << size << std::endl;
+   	
 #if 0
 	MCSPI_Transaction_init(&spiTransaction);
-    spiTransaction.channel   = gConfigMcspi0ChCfg[0].chNum;
-    spiTransaction.dataSize  = 16;
-    spiTransaction.csDisable = TRUE;
     spiTransaction.count     = continuousImageDownloadCMDMsgSize  / 2*(spiTransaction.dataSize/16);
     spiTransaction.txBuf     = (void *)continuousImageDownloadCMD;
     spiTransaction.rxBuf     = NULL;
@@ -362,14 +368,13 @@ void spiboot()
     spiTransaction.channel  = gConfigMcspi0ChCfg[0].chNum;
     spiTransaction.dataSize = 16;
     spiTransaction.csDisable = TRUE;
-    spiTransaction.count    = 8/ (spiTransaction.dataSize/16);
+    spiTransaction.count    = 8 / (spiTransaction.dataSize/16);
     spiTransaction.txBuf    = (void *)SwitchToApplicationRESP;
     spiTransaction.rxBuf    = (void *)gMcspiRxBuffer3;
     spiTransaction.args     = NULL;
     transferOK = MCSPI_transfer(gMcspiHandle[CONFIG_MCSPI0], &spiTransaction);
 
-    if((status != transferOK) ||
-       (MCSPI_TRANSFER_COMPLETED != spiTransaction.status))
+    if((status != transferOK) || (MCSPI_TRANSFER_COMPLETED != spiTransaction.status))
     {
         DebugP_assert(FALSE); 
     }
@@ -414,17 +419,31 @@ int main(void)
 	{
 		gpio_free(&chip, &spi_busy);
 	}
-#if 0
+#if 1
 	uint8_t tx[100];
+
+	for (uint8_t i = 0; i < 100; ++i)
+	{
+		tx[i] = (uint8_t)0xab;
+	}
+
 	uint8_t rx[100];
-	for(uint8_t i = 0; i < 20; ++i)
+	while(true)
 	{
 	    transfer(tx, rx, 8, spi_config);
 	}
 #endif
-
-	spiboot();
-
+#if 0
+	try 
+	{
+	    spiboot(spi_config);
+	}
+	catch(std::exception &e)
+	{
+		exit_code = -1;
+		std::cerr << e.what() << std::endl;
+	}
+#endif
     close(spi_config.file_descriptor); //TODO: consider if this can be called twice in an error state, and if that is safe
     return exit_code;
 
