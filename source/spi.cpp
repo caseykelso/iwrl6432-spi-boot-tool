@@ -14,7 +14,7 @@
 #include <linux/types.h>
 #include <linux/spi/spidev.h>
 #include <asm-generic/ioctl.h>
-#include <gpiod.h>
+#include <gpio.h>
 
 /* Size of Continuous Image Download Command */
 #define continuousImageDownloadCMDMsgSize   (32U)
@@ -63,32 +63,6 @@ uint32_t SwitchToApplicationRESP[] = {0x0000,0x0000,0x0000,0x0000}; // SWITCH_TO
 uint32_t gMcspiRxBuffer1[8]={0};
 uint32_t gMcspiRxBuffer2[4]={0};
 uint32_t gMcspiRxBuffer3[4]={0};
-
-void gpio_init(struct gpiod_chip **chip, struct gpiod_line **line, uint8_t gpio_pin, std::string chip_name)
-{
-	int result = 0;
-
-    *chip        = gpiod_chip_open_by_name(chip_name.c_str());
-
-	if (NULL == *chip)
-	{
-		throw std::runtime_error("ERROR: Could not open GPIOD chip");
-	}
-
-    *line        = gpiod_chip_get_line(*chip, gpio_pin);
-	result = gpiod_line_request_input(*line, "spibusy");
-
-	if (result < 0)
-	{
-		throw std::runtime_error("ERROR: Could not set SPI_BUSY GPIO as a input.");
-	}
-}
-
-void gpio_free(struct gpiod_chip **chip, struct gpiod_line **line)
-{
-	gpiod_line_release(*line);
-	gpiod_chip_close(*chip);
-}
 
 void transfer(uint8_t const *tx, uint8_t const *rx, uint32_t length, spi_config_t config)
 {
