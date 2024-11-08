@@ -415,10 +415,6 @@ int main(void)
 		std::cerr << e.what() << std::endl;
 	}
 
-	if (exit_code == 0)
-	{
-		gpio_free(&chip, &spi_busy);
-	}
 #if 1
 	uint8_t tx[100];
 
@@ -445,7 +441,11 @@ int main(void)
 	}
 #endif
     close(spi_config.file_descriptor); //TODO: consider if this can be called twice in an error state, and if that is safe
-    return exit_code;
+	if (exit_code == 0)
+	{
+		gpio_free(&chip, &spi_busy);
+	}
+	return exit_code;
 
 }
 
