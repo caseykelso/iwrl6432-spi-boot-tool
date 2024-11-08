@@ -263,26 +263,20 @@ void spiboot(spi_config_t &config)
     transfer((uint8_t*)continuousImageDownloadCMD, NULL, size, config); 
 	std::cout << "transfer: " << size << std::endl;
    	
-#if 0
-	MCSPI_Transaction_init(&spiTransaction);
     spiTransaction.count     = continuousImageDownloadCMDMsgSize  / 2*(spiTransaction.dataSize/16);
     spiTransaction.txBuf     = (void *)continuousImageDownloadCMD;
-    spiTransaction.rxBuf     = NULL;
-    spiTransaction.args      = NULL;
     
-    transferOK = MCSPI_transfer(gMcspiHandle[CONFIG_MCSPI0], &spiTransaction);
-#endif
 
     
 
     /* Waiting for SPIBusy to go low */
     SPIBusy = 1;
-#if 0 
     while(SPIBusy==1)
     {
         SPIBusy=GPIO_pinRead(gpioBaseAddr, pinNum);
     }
 
+#if 0
     /* Initiate transfer for Image Data in two chunks and than send Dummy Data */
     MCSPI_Transaction_init(&spiTransaction);
     spiTransaction.channel  = gConfigMcspi0ChCfg[0].chNum;
@@ -429,6 +423,7 @@ int main(void)
 	    transfer(tx, rx, 8, spi_config);
 	}
 #endif
+
 #if 0
 	try 
 	{
@@ -440,6 +435,7 @@ int main(void)
 		std::cerr << e.what() << std::endl;
 	}
 #endif
+
     close(spi_config.file_descriptor); //TODO: consider if this can be called twice in an error state, and if that is safe
 	if (exit_code == 0)
 	{
