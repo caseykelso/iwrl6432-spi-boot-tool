@@ -262,12 +262,9 @@ void spiboot(spi_config_t &config)
 	uint32_t size = continuousImageDownloadCMDMsgSize; // / 2*(config.length/config.bits_per_word;
     transfer((uint8_t*)continuousImageDownloadCMD, NULL, size, config); 
 	std::cout << "transfer: " << size << std::endl;
-   	
+#if 0
     spiTransaction.count     = continuousImageDownloadCMDMsgSize  / 2*(spiTransaction.dataSize/16);
     spiTransaction.txBuf     = (void *)continuousImageDownloadCMD;
-    
-
-    
 
     /* Waiting for SPIBusy to go low */
     SPIBusy = 1;
@@ -276,6 +273,7 @@ void spiboot(spi_config_t &config)
         SPIBusy=GPIO_pinRead(gpioBaseAddr, pinNum);
     }
 
+#endif 
 #if 0
     /* Initiate transfer for Image Data in two chunks and than send Dummy Data */
     MCSPI_Transaction_init(&spiTransaction);
