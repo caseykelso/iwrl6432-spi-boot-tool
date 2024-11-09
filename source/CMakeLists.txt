@@ -1,6 +1,6 @@
 cmake_minimum_required (VERSION 3.25)
 project(xwrflasher)
-add_executable(xwrflasher spi.cpp gpio.cpp)
+add_executable(xwrflasher spi.cpp gpio.cpp main.cpp)
 include_directories(${CMAKE_PREFIX_PATH}/include ${CMAKE_CURRENT_SOURCE_DIR})
 target_link_directories(xwrflasher BEFORE PUBLIC ${CMAKE_PREFIX_PATH}/lib)
 target_link_libraries(xwrflasher gpiod pthread rt)

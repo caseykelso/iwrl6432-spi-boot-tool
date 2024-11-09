@@ -1,20 +1,18 @@
-#include <stdint.h>
-#include <stdlib.h>
 #include <iostream>
-#include <stdio.h>
-#include <unistd.h>
-#include <stdexcept>
-#include <errno.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include "appimagedata.h"
-#include <fcntl.h>
-#include <asm-generic/ioctl.h>
+#include <stdint.h>
+#include "spi.h"
 #include <sys/ioctl.h>
 #include <linux/types.h>
 #include <linux/spi/spidev.h>
 #include <asm-generic/ioctl.h>
-#include <gpio.h>
+#include <errno.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include <unistd.h>
+#include "appimagedata.h"
 
 /* Size of Continuous Image Download Command */
 #define continuousImageDownloadCMDMsgSize   (32U)
@@ -33,15 +31,6 @@
 #define APP_CRC_DATA_SIZE                   CRC_DW_32bit
 #define APP_CRC_BIT_SWAP                    1
 #define APP_CRC_BYTE_SWAP                   0
-
-typedef struct {
-	uint8_t mode;
-	uint8_t bits_per_word;
-	uint32_t speed;
-	uint16_t delay;
-	std::string device;
-	int file_descriptor;
-} spi_config_t;
 
 uint32_t crcValue=0;
 
@@ -353,67 +342,8 @@ void spiboot(spi_config_t &config)
     //return NULL;
 }
 
-int main(void)
+void spi_close(spi_config_t &config)
 {
-	struct gpiod_chip *chip;
-	struct gpiod_line *spi_busy;
-
-	int          exit_code     = 0;
-	spi_config_t spi_config    = {};
-	spi_config.mode            = 0;
-	spi_config.speed           = 500000;
-	spi_config.bits_per_word   = 8;
-	spi_config.device          = "/dev/spidev0.1";
-	spi_config.file_descriptor = 0;
-	spi_config.delay           = 10; //10 microseconds
-	const uint8_t SPI_BUSY_PIN = 22;
-
-	const std::string gpiod_chip_name("gpiochip0");
-
-	try 
-	{
-	   spi_init(spi_config);
-	   gpio_init(&chip, &spi_busy, SPI_BUSY_PIN, gpiod_chip_name);
-	} 
-	catch(std::exception &e)
-	{
-		exit_code = -1;
-		std::cerr << e.what() << std::endl;
-	}
-
-#if 1
-	uint8_t tx[100];
-
-	for (uint8_t i = 0; i < 100; ++i)
-	{
-		tx[i] = (uint8_t)0xab;
-	}
-
-	uint8_t rx[100];
-	while(true)
-	{
-	    transfer(tx, rx, 8, spi_config);
-	}
-#endif
-
-#if 0
-	try 
-	{
-	    spiboot(spi_config);
-	}
-	catch(std::exception &e)
-	{
-		exit_code = -1;
-		std::cerr << e.what() << std::endl;
-	}
-#endif
-
-    close(spi_config.file_descriptor); //TODO: consider if this can be called twice in an error state, and if that is safe
-	if (exit_code == 0)
-	{
-		gpio_free(&chip, &spi_busy);
-	}
-	return exit_code;
-
+    close(config.file_descriptor); //TODO: consider if this can be called twice in an error state, and if that is safe
 }
 
