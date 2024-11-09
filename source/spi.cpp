@@ -44,10 +44,10 @@ DMA for continuous image download. It has the following format
 
 static uint32_t continuousImageDownloadCMD[]={0x0000,0x00100018,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000};
 
-/* The Image data should be multiple of 16 . dummyData is used to send extra bytes 
+/* The Image data should be multiple of 16 . dummy_data is used to send extra bytes 
 so that overall image size should become multiple of 16 */
 
-uint32_t* dummyData = NULL;
+uint32_t* dummy_data = NULL;
 uint32_t continuousImageDownloadRESP[8] = {0};
 uint32_t SwitchToApplicationCMD[] = {0x9DFAC3F2,0x0000001A,0x0000,0x0000}; // SWITCH_TO_APPLICATION_CMD
 uint32_t SwitchToApplicationRESP[] = {0x0000,0x0000,0x0000,0x0000}; // SWITCH_TO_APPLICATION_RESP
@@ -225,6 +225,15 @@ bool is_spi_busy(const spi_config_t config)
     return (result);
 }
 
+void block_until_spi_ready(const spi_config_t config)
+{
+    while(is_spi_busy(config))
+    {
+        std::this_thread::sleep_for(std::chrono::milliseconds(config.gpio_sleep_ms));
+    }
+}
+
+//TODO: disable chip select in spidev
 /* Transferring appimage via SPI */
 void spiboot(spi_config_t &config)
 {   
@@ -242,12 +251,12 @@ void spiboot(spi_config_t &config)
     
     continuousImageDownloadCMD[0]=crcValue;
 
-    dummyData = (uint32_t*)malloc(sizeof(uint32_t) * padding);
+    dummy_data = (uint32_t*)malloc(sizeof(uint32_t) * padding);
     for(int i=0;i<padding;i++){
-        dummyData[i]=0;
+        dummy_data[i]=0;
     }
 
-	if (NULL == dummyData)
+	if (NULL == dummy_data)
 	{
 		throw std::runtime_error("ERROR: failed to allocate SPI dummy data.");
 	}
@@ -255,55 +264,24 @@ void spiboot(spi_config_t &config)
     /* Initiate transfer for Continuous Image Download Command */
 	uint32_t size = continuousImageDownloadCMDMsgSize; // / 2*(config.length/config.bits_per_word;
     spi_transfer((uint8_t*)continuousImageDownloadCMD, NULL, size, config); 
-	std::cout << "transfer: " << size << std::endl;
+	std::cout << "transfer download command: " << size << std::endl;
 
-    /* Waiting for GPIO indicating that SPI is busy to go inactive */
-    while(is_spi_busy(config))
-    {
-        std::this_thread::sleep_for(std::chrono::milliseconds(config.gpio_sleep_ms));
-    }
+    block_until_spi_ready(config);
 
+	// Send image chunk 1
+	size = Size/2;
+	spi_transfer((uint8_t*)image, NULL, size, config);
+	std::cout << "transfer image chunk 1: " << size << std::endl;
+
+    spi_transfer((uint8_t*)image+(Size/2), NULL, size, config);
+    std::cout << "transfer image chunk 2: " << size << std::endl;	
+
+	//TODO: set size here for dummy data
+	spi_transfer((uint8_t*)dummy_data, NULL, size, config);
+	std::cout << "transfer dummy data: " << size << std::endl;
+  
+    block_until_spi_ready(config);
 #if 0
-    /* Initiate transfer for Image Data in two chunks and than send Dummy Data */
-    MCSPI_Transaction_init(&spiTransaction);
-    spiTransaction.channel  = gConfigMcspi0ChCfg[0].chNum;
-    spiTransaction.dataSize = 16;
-    spiTransaction.csDisable = TRUE;
-    spiTransaction.count    = Size / 4*(spiTransaction.dataSize/16);
-    spiTransaction.txBuf    = (void *)image;
-    spiTransaction.rxBuf    = NULL;
-    spiTransaction.args     = NULL;
-    transferOK = MCSPI_transfer(gMcspiHandle[CONFIG_MCSPI0], &spiTransaction);
-
-    MCSPI_Transaction_init(&spiTransaction);
-    spiTransaction.channel  = gConfigMcspi0ChCfg[0].chNum;
-    spiTransaction.dataSize = 16;
-    spiTransaction.csDisable = TRUE;
-    spiTransaction.count    = Size / 4*(spiTransaction.dataSize/16);
-    spiTransaction.txBuf    = (void *)(image+(Size/2));
-    spiTransaction.rxBuf    = NULL;
-    spiTransaction.args     = NULL;
-    transferOK = MCSPI_transfer(gMcspiHandle[CONFIG_MCSPI0], &spiTransaction);
-    
-    MCSPI_Transaction_init(&spiTransaction);
-    spiTransaction.channel  = gConfigMcspi0ChCfg[0].chNum;
-    spiTransaction.dataSize = 16;
-    spiTransaction.csDisable = TRUE;
-    spiTransaction.count    = 6/ (spiTransaction.dataSize/16);
-    spiTransaction.txBuf    = (void *)dummyData;
-    spiTransaction.rxBuf    = NULL;
-    spiTransaction.args     = NULL;
-    
-    transferOK = MCSPI_transfer(gMcspiHandle[CONFIG_MCSPI0], &spiTransaction);
-    
-    /* Waiting for SPIBusy to go low */
-    SPIBusy = 1;
-    
-    while(SPIBusy==1)
-    {
-        SPIBusy=GPIO_pinRead(gpioBaseAddr, pinNum);
-    }
-
     /* Receiving Continuous Image Download RESP */
     MCSPI_Transaction_init(&spiTransaction);
     spiTransaction.channel  = gConfigMcspi0ChCfg[0].chNum;
