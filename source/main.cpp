@@ -21,15 +21,28 @@ int main(void)
 
 	const std::string gpiod_chip_name("gpiochip0");
 
+
 	try 
 	{
 	   spi_init(spi_config);
-	   gpio_init(&chip, &spi_busy, SPI_BUSY_PIN, gpiod_chip_name);
-	} 
+	}
 	catch(std::exception &e)
 	{
 		exit_code = -1;
 		std::cerr << e.what() << std::endl;
+		return(exit_code);
+	}
+
+	try 
+	{
+	   gpio_init(&chip, &spi_busy, SPI_BUSY_PIN, gpiod_chip_name);
+	} 
+	catch(std::exception &e)
+	{
+        spi_close(spi_config);
+		std::cerr << e.what() << std::endl;
+		exit_code = -1;
+		return(exit_code);
 	}
 
 #if 1
@@ -60,11 +73,7 @@ int main(void)
 #endif
 
 	spi_close(spi_config);
-
-	if (exit_code == 0)
-	{
-		gpio_free(&chip, &spi_busy);
-	}
+	gpio_free(&chip, &spi_busy);
 	return exit_code;
 
 }
