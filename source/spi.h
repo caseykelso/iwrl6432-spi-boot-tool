@@ -1,5 +1,7 @@
 #pragma once
 
+typedef std::function<uint32_t ()> gpio_callback_t;
+
 typedef struct {
 	uint8_t mode;
 	uint8_t bits_per_word;
@@ -7,6 +9,8 @@ typedef struct {
 	uint16_t delay;
 	std::string device;
 	int file_descriptor;
+	gpio_callback_t gpio_callback;
+	uint8_t gpio_sleep_ms;
 } spi_config_t;
 
 bool spi_init(spi_config_t &spi_config);

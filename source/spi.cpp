@@ -1,6 +1,5 @@
 #include <iostream>
 #include <stdint.h>
-#include "spi.h"
 #include <sys/ioctl.h>
 #include <linux/types.h>
 #include <linux/spi/spidev.h>
@@ -13,6 +12,11 @@
 #include <stdio.h>
 #include <unistd.h>
 #include "appimagedata.h"
+#include <functional>
+#include "spi.h"
+#include <memory>
+#include <thread>
+#include <chrono>
 
 /* Size of Continuous Image Download Command */
 #define continuousImageDownloadCMDMsgSize   (32U)
@@ -192,6 +196,34 @@ void calculatecrc32(void *args)
 #endif 
 }
 
+bool is_spi_busy(const spi_config_t config)
+{
+	static const bool SPIBUSY_ACTIVE   = true;
+	static const bool SPIBUSY_INACTIVE = false;
+
+	bool result     = false;
+	bool gpio_state = SPIBUSY_ACTIVE;
+
+	if (nullptr != config.gpio_callback)
+	{
+		gpio_state = config.gpio_callback();
+	}
+	else
+	{
+		throw std::runtime_error("ERROR: gpio_callback is not set.");
+	}
+
+	if (SPIBUSY_ACTIVE == gpio_state)
+	{
+		result = true;
+	}
+	else
+	{
+		result = false;
+	}
+
+    return (result);
+}
 
 /* Transferring appimage via SPI */
 void spiboot(spi_config_t &config)
@@ -200,7 +232,6 @@ void spiboot(spi_config_t &config)
     uint32_t padding       = padded_data/4;
     int32_t  status        = 0; //SystemP_SUCCESS;
     uint32_t gpioBaseAddr, pinNum;
-    volatile uint32_t SPIBusy;
     int32_t  transferOK;
 
 	std::cout << "Booting via SPI ..." << std::endl;
@@ -225,18 +256,13 @@ void spiboot(spi_config_t &config)
 	uint32_t size = continuousImageDownloadCMDMsgSize; // / 2*(config.length/config.bits_per_word;
     spi_transfer((uint8_t*)continuousImageDownloadCMD, NULL, size, config); 
 	std::cout << "transfer: " << size << std::endl;
-#if 0
-    spiTransaction.count     = continuousImageDownloadCMDMsgSize  / 2*(spiTransaction.dataSize/16);
-    spiTransaction.txBuf     = (void *)continuousImageDownloadCMD;
 
-    /* Waiting for SPIBusy to go low */
-    SPIBusy = 1;
-    while(SPIBusy==1)
+    /* Waiting for GPIO indicating that SPI is busy to go inactive */
+    while(is_spi_busy(config))
     {
-        SPIBusy=GPIO_pinRead(gpioBaseAddr, pinNum);
+        std::this_thread::sleep_for(std::chrono::milliseconds(config.gpio_sleep_ms));
     }
 
-#endif 
 #if 0
     /* Initiate transfer for Image Data in two chunks and than send Dummy Data */
     MCSPI_Transaction_init(&spiTransaction);
