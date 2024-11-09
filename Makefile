@@ -17,7 +17,6 @@ else
 INSTALLED.HOST.DIR=$(INSTALLED_HOST_DIR)
 endif
 
-#CMAKE.TOOLCHAIN.FILE.RPI4=$(BASE.DIR)/arm-linux-gnueabihf.cmake
 CMAKE.TOOLCHAIN.FILE.RPI4=$(BASE.DIR)/aarch64-linux.cmake
 
 CMAKE.BIN=/usr/bin/cmake
