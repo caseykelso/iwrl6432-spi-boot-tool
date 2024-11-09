@@ -17,6 +17,7 @@
 #include <memory>
 #include <thread>
 #include <chrono>
+#include <zlib.h>
 
 /* Size of Continuous Image Download Command */
 #define continuousImageDownloadCMDMsgSize   (32U)
@@ -152,45 +153,13 @@ bool spi_init(spi_config_t &spi_config)
 }
 
 /* CRC Calculation for Continuous Image Download Command */
-void calculatecrc32(void *args)
+void calculatecrc32()
 {
-#if 0
-    uint32_t                loopCnt, patternCnt, baseAddr;
-    CRC_Channel_t           chNumber;
-    CRC_Signature           signVal;
-    CRC_SignatureRegAddr    psaSignRegAddr;
-    
     uint32_t padded_data=16-(Size%16);
-    /* Configure CRC parameters */
-    baseAddr           = (uint32_t) AddrTranslateP_getLocalAddr(CONFIG_CRC0_BASE_ADDR);
-    patternCnt         = APP_CRC_PATTERN_CNT;
-    chNumber           = APP_CRC_CHANNEL;
-
-    
     continuousImageDownloadCMD[4]=Size+padded_data;
     continuousImageDownloadCMD[5]=Size;
-    /* Get CRC PSA signature register address */
-    //CRC_getPSASigRegAddr(baseAddr, chNumber, &psaSignRegAddr);
-
-    /* Initialize and Configure CRC channel */
-    //CRC_initialize(baseAddr, chNumber, APP_CRC_WATCHDOG_PRELOAD_VAL, APP_CRC_BLOCK_PRELOAD_VAL);
-
-    //CRC_configure(baseAddr, chNumber, patternCnt, APP_CRC_SECT_CNT, CRC_OPERATION_MODE_FULLCPU, APP_CRC_TYPE, APP_CRC_DATA_SIZE,APP_CRC_BIT_SWAP,APP_CRC_BYTE_SWAP);
-
-    /* Reset the CRC channel*/
-    //CRC_channelReset(baseAddr, chNumber);
-
-    /* compute the CRC by writing the data buffer on which CRC computation is needed */
-/*
-	for (loopCnt = 1; loopCnt < patternCnt+1 ; loopCnt++)
-    {
-        HW_WR_REG32(psaSignRegAddr.regL, continuousImageDownloadCMD[loopCnt]);
-    }
-*/
-    /* Fetch CRC signature value */
-    //CRC_getPSASig(baseAddr, chNumber, &signVal);
-    //crcValue=signVal.regL;
-#endif 
+	crcValue = crc32(0L, Z_NULL, 0);
+	crcValue = crc32(crcValue, (Bytef*)continuousImageDownloadCMD, APP_CRC_PATTERN_CNT+1);
 }
 
 bool is_spi_busy(const spi_config_t config)
@@ -242,7 +211,7 @@ void spiboot(spi_config_t &config)
     std::cout << "Transferring appimage via SPI ..." << std::endl;
     
     /* calculation of CRC for Continuous Image Download Command */
-    calculatecrc32(NULL);
+    calculatecrc32();
     
     continuousImageDownloadCMD[0]=crcValue;
 
