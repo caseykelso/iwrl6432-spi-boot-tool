@@ -53,7 +53,7 @@ uint32_t gMcspiRxBuffer1[8]={0};
 uint32_t gMcspiRxBuffer2[4]={0};
 uint32_t gMcspiRxBuffer3[4]={0};
 
-void transfer(uint8_t const *tx, uint8_t const *rx, uint32_t length, spi_config_t config)
+void spi_transfer(uint8_t const *tx, uint8_t const *rx, uint32_t length, spi_config_t config)
 {
 	int result = 0;
 
@@ -223,7 +223,7 @@ void spiboot(spi_config_t &config)
 
     /* Initiate transfer for Continuous Image Download Command */
 	uint32_t size = continuousImageDownloadCMDMsgSize; // / 2*(config.length/config.bits_per_word;
-    transfer((uint8_t*)continuousImageDownloadCMD, NULL, size, config); 
+    spi_transfer((uint8_t*)continuousImageDownloadCMD, NULL, size, config); 
 	std::cout << "transfer: " << size << std::endl;
 #if 0
     spiTransaction.count     = continuousImageDownloadCMDMsgSize  / 2*(spiTransaction.dataSize/16);

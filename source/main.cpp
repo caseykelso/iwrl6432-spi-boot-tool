@@ -56,7 +56,7 @@ int main(void)
 	uint8_t rx[100];
 	while(true)
 	{
-	    transfer(tx, rx, 8, spi_config);
+	    spi_transfer(tx, rx, 8, spi_config);
 	}
 #endif
 
