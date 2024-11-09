@@ -33,6 +33,7 @@ void gpio_free(struct gpiod_chip **chip, struct gpiod_line **line)
 bool gpio_read(struct gpiod_chip **chip, struct gpiod_line **line)
 {
 	bool result = false;
+	//TODO: implement libgpiod read
 	return result;
 }
 

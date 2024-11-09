@@ -5,11 +5,11 @@
 #include <functional>
 #include <spi.h>
 
-struct gpiod_chip *chip;
-struct gpiod_line *spi_busy;
-const uint8_t SPI_BUSY_PIN = 22;
+struct        gpiod_chip *chip     = nullptr;
+struct        gpiod_line *spi_busy = nullptr;
+const uint8_t SPI_BUSY_PIN         = 22;
 
-//callback to get spi busy gpio state
+//callback to get spi busy gpio state, this is important to decouple the spi and gpio implementations
 bool gpio_spi_busy()
 {
 	return gpio_read(&chip, &spi_busy);
@@ -17,6 +17,8 @@ bool gpio_spi_busy()
 
 int main(void)
 {
+	const std::string gpiod_chip_name("gpiochip0");
+
 	int          exit_code     = 0;
 	spi_config_t spi_config    = {};
 	spi_config.mode            = 0;
@@ -27,7 +29,6 @@ int main(void)
 	spi_config.delay           = 10; //10 microseconds
 	spi_config.gpio_callback   = gpio_spi_busy;
 	spi_config.gpio_sleep_ms   = 10;
-	const std::string gpiod_chip_name("gpiochip0");
 
 	try 
 	{
@@ -52,7 +53,7 @@ int main(void)
 		return(exit_code);
 	}
 
-#if 0
+#ifdef SPI_TEST_PATTERN
 	uint8_t tx[100];
 
 	for (uint8_t i = 0; i < 100; ++i)
@@ -65,9 +66,7 @@ int main(void)
 	{
 	    spi_transfer(tx, rx, 8, spi_config);
 	}
-#endif
-
-#if 1
+#else
 	try 
 	{
 	    spiboot(spi_config);
@@ -82,6 +81,5 @@ int main(void)
 	spi_close(spi_config);
 	gpio_free(&chip, &spi_busy);
 	return exit_code;
-
 }
 
