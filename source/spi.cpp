@@ -20,7 +20,6 @@
 
 /* Size of Continuous Image Download Command */
 #define continuousImageDownloadCMDMsgSize   (32U)
-
 #define APP_CRC_CHANNEL                     (CRC_CHANNEL_1)
 
 /* Data Size for calculation of CRC of Continuous Image Download Command */
@@ -211,6 +210,7 @@ bool is_spi_busy(const spi_config_t config)
 		throw std::runtime_error("ERROR: gpio_callback is not set.");
 	}
 
+	// this might seem obvious but it is worth spelling it out in case GPIO were to be switched to active low
 	if (SPIBUSY_ACTIVE == gpio_state)
 	{
 		result = true;
@@ -237,9 +237,6 @@ void spiboot(spi_config_t &config)
 {   
     uint32_t padded_data   = 16-(Size%16); //Extra bytes to make image size multiple of 16 
     uint32_t padding       = padded_data/4;
-    int32_t  status        = 0; //SystemP_SUCCESS;
-    uint32_t gpioBaseAddr, pinNum;
-    int32_t  transferOK;
 
 	std::cout << "Booting via SPI ..." << std::endl;
     std::cout << "Transferring appimage via SPI ..." << std::endl;
@@ -250,7 +247,9 @@ void spiboot(spi_config_t &config)
     continuousImageDownloadCMD[0]=crcValue;
 
     dummy_data = (uint32_t*)malloc(sizeof(uint32_t) * padding);
-    for(int i=0;i<padding;i++){
+
+    for(uint32_t i=0; i < padding; i++)
+	{
         dummy_data[i]=0;
     }
 
