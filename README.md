@@ -1,4 +1,5 @@
-# TI IWRL6432 Tooling to Boot from SPI without a QSPI Flash
+# TI IWRL6432 Tooling to Boot from SPI without a QSPI Flash by transferring the firmware over SPI to RAM and booting
+This example uses a Raspberry PI 4 (RPI4) as the SPI Controller.
 
 ## Setup Ubuntu 24.04 Build Environment - Build for RPI4 Ubuntu 22.04
 Update the contents of your /etc/apt/sources.list to match the sources.list in this repo.
