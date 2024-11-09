@@ -64,7 +64,7 @@ void spi_transfer(uint8_t const *tx, uint8_t const *rx, uint32_t length, spi_con
 	struct spi_ioc_transfer tr = 
 	{
 		.tx_buf        = (unsigned long)tx,
-//		.rx_buf        = (unsigned long)rx,
+		.rx_buf        = (unsigned long)rx,
 		.len           = length,
 		.speed_hz      = config.speed,
 		.delay_usecs   = config.delay,
@@ -81,8 +81,6 @@ void spi_transfer(uint8_t const *tx, uint8_t const *rx, uint32_t length, spi_con
 	{
 	    std::cout << unsigned(result) << std::endl;
 	}
-
-
 }
 
 bool spi_init(spi_config_t &spi_config)
@@ -281,69 +279,26 @@ void spiboot(spi_config_t &config)
 	std::cout << "transfer dummy data: " << size << std::endl;
   
     block_until_spi_ready(config);
-#if 0
-    /* Receiving Continuous Image Download RESP */
-    MCSPI_Transaction_init(&spiTransaction);
-    spiTransaction.channel  = gConfigMcspi0ChCfg[0].chNum;
-    spiTransaction.dataSize = 16;
-    spiTransaction.csDisable = TRUE;
-    spiTransaction.count    = 16/ (spiTransaction.dataSize/16);
-    spiTransaction.txBuf    = (void *)continuousImageDownloadRESP;
-    spiTransaction.rxBuf    = (void *)gMcspiRxBuffer1;
-    spiTransaction.args     = NULL;
-    transferOK = MCSPI_transfer(gMcspiHandle[CONFIG_MCSPI0], &spiTransaction);
-    
-    /* Waiting for SPIBusy to go low */
-    SPIBusy = 1;
-    
-    while(SPIBusy==1)
-    {
-        SPIBusy=GPIO_pinRead(gpioBaseAddr, pinNum);
-    }
+
+	size = 16; //TODO: is this right?
+	spi_transfer((uint8_t*)continuousImageDownloadRESP, (uint8_t*)gMcspiRxBuffer1, size, config);
+	std::cout << "transfer continuous image downoad response: " << size << std::endl;
+
+ 	block_until_spi_ready(config);
 
 
-    /* Initiate transfer for SWITCH_TO_APPLICATION_CMD */
-    MCSPI_Transaction_init(&spiTransaction);
-    spiTransaction.channel  = gConfigMcspi0ChCfg[0].chNum;
-    spiTransaction.dataSize = 16;
-    spiTransaction.csDisable = TRUE;
-    spiTransaction.count    = 8/ (spiTransaction.dataSize/16);
-    spiTransaction.txBuf    = (void *)SwitchToApplicationCMD;
-    spiTransaction.rxBuf    = (void *)gMcspiRxBuffer2;
-    spiTransaction.args     = NULL;
-    transferOK = MCSPI_transfer(gMcspiHandle[CONFIG_MCSPI0], &spiTransaction);
-    
-    /* Waiting for SPIBusy to go low */
-    SPIBusy = 1;
-    
-    while(SPIBusy==1)
-    {
-        SPIBusy=GPIO_pinRead(gpioBaseAddr, pinNum);
-    }
+	size = 8; //TODO: is this right?
+	spi_transfer((uint8_t*)SwitchToApplicationCMD, (uint8_t*)gMcspiRxBuffer2, size, config);
+	std::cout << "transfer switch to application command: " << size << std::endl;
 
+    block_until_spi_ready(config);	
+
+	size = 8; //TODO: is this right?
+	spi_transfer((uint8_t*)SwitchToApplicationRESP, (uint8_t*)gMcspiRxBuffer3, size, config);
+	std::cout << "transfer switch to application response: " << size << std::endl;
   
-    /* Initiate transfer for SWITCH_TO_APPLICATION_RESP */
-    MCSPI_Transaction_init(&spiTransaction);
-    spiTransaction.channel  = gConfigMcspi0ChCfg[0].chNum;
-    spiTransaction.dataSize = 16;
-    spiTransaction.csDisable = TRUE;
-    spiTransaction.count    = 8 / (spiTransaction.dataSize/16);
-    spiTransaction.txBuf    = (void *)SwitchToApplicationRESP;
-    spiTransaction.rxBuf    = (void *)gMcspiRxBuffer3;
-    spiTransaction.args     = NULL;
-    transferOK = MCSPI_transfer(gMcspiHandle[CONFIG_MCSPI0], &spiTransaction);
-
-    if((status != transferOK) || (MCSPI_TRANSFER_COMPLETED != spiTransaction.status))
-    {
-        DebugP_assert(FALSE); 
-    }
-    
-    DebugP_log("Booting via SPI is completed \r\n");
-
-    Board_driversClose();
-    Drivers_close();
-#endif
-    //return NULL;
+    //TODO: put in check for success
+	std::cout << "Booting via SPI is completed." << std::endl;
 }
 
 void spi_close(spi_config_t &config)
