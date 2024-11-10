@@ -8,7 +8,7 @@ Update the contents of your /etc/apt/sources.list to match the sources.list in t
 sudo dpkg --add-architecture arm64
 sudo dpkg --print-foreign-architectures
 sudo apt update -y
-sudo apt install git build-essential cmake libdocopt-dev libuv1-dev flex bison libgtest-dev spi-tools gcc-11-aarch64-linux-gnu g++-11-aarch64-linux-gnu libgpiod-dev libgpiod-dev:arm64
+sudo apt install git build-essential cmake libdocopt-dev libuv1-dev flex bison libgtest-dev spi-tools gcc-11-aarch64-linux-gnu g++-11-aarch64-linux-gnu libgpiod-dev libgpiod-dev:arm64 libz-dev:arm64
 ```
 
 ## Update the Ubuntu 22.04 environemnt on your RPI4 target
