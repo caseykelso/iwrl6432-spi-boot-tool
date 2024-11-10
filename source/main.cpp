@@ -36,9 +36,9 @@ int main(void)
 	}
 	catch(std::exception &e)
 	{
-		exit_code = -1;
-		std::cerr << e.what() << std::endl;
-		return(exit_code);
+            exit_code = -1;
+            std::cerr << e.what() << std::endl;
+            return(exit_code);
 	}
 
 	try 
@@ -47,10 +47,10 @@ int main(void)
 	} 
 	catch(std::exception &e)
 	{
-        spi_close(spi_config);
-		std::cerr << e.what() << std::endl;
-		exit_code = -1;
-		return(exit_code);
+            spi_close(spi_config);
+            std::cerr << e.what() << std::endl;
+            exit_code = -1;
+            return(exit_code);
 	}
 
 #ifdef SPI_TEST_PATTERN
@@ -58,10 +58,11 @@ int main(void)
 
 	for (uint8_t i = 0; i < 100; ++i)
 	{
-		tx[i] = (uint8_t)0xab;
+            tx[i] = (uint8_t)0xab;
 	}
 
 	uint8_t rx[100];
+
 	while(true)
 	{
 	    spi_transfer(tx, rx, 8, spi_config);
@@ -73,8 +74,8 @@ int main(void)
 	}
 	catch(std::exception &e)
 	{
-		exit_code = -1;
-		std::cerr << e.what() << std::endl;
+            exit_code = -1;
+            std::cerr << e.what() << std::endl;
 	}
 #endif
 

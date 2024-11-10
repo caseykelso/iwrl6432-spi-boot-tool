@@ -71,16 +71,16 @@ void spi_transfer(uint8_t const *tx, uint8_t const *rx, uint32_t length, spi_con
 		.bits_per_word = config.bits_per_word,
 	};
 
-    result = ioctl(config.file_descriptor, SPI_IOC_MESSAGE(1), &tr); 
+        result = ioctl(config.file_descriptor, SPI_IOC_MESSAGE(1), &tr); 
 
-	if (result < 1)
-	{
-		throw std::runtime_error("ERROR: Cannot send SPI message, error number: "+ std::to_string(result));
-	}
-	else
-	{
-	    std::cout << unsigned(result) << std::endl;
-	}
+        if (result < 1)
+        {
+	        throw std::runtime_error("ERROR: Cannot send SPI message, error number: "+ std::to_string(result));
+        }
+        else
+        {
+	        std::cout << unsigned(result) << std::endl;
+        }
 }
 
 bool spi_init(spi_config_t &spi_config)
@@ -155,39 +155,39 @@ bool spi_init(spi_config_t &spi_config)
 /* CRC Calculation for Continuous Image Download Command */
 void calculatecrc32()
 {
-    uint32_t padded_data=16-(Size%16);
-    continuousImageDownloadCMD[4]=Size+padded_data;
-    continuousImageDownloadCMD[5]=Size;
+        uint32_t padded_data=16-(Size%16);
+        continuousImageDownloadCMD[4]=Size+padded_data;
+        continuousImageDownloadCMD[5]=Size;
 	crcValue = crc32(0L, Z_NULL, 0);
 	crcValue = crc32(crcValue, (Bytef*)continuousImageDownloadCMD, APP_CRC_PATTERN_CNT+1);
 }
 
 bool is_spi_busy(const spi_config_t config)
 {
-	static const bool SPIBUSY_ACTIVE   = true;
-	static const bool SPIBUSY_INACTIVE = false;
+    static const bool SPIBUSY_ACTIVE   = true;
+    static const bool SPIBUSY_INACTIVE = false;
 
-	bool result     = false;
-	bool gpio_state = SPIBUSY_ACTIVE;
+    bool result     = false;
+    bool gpio_state = SPIBUSY_ACTIVE;
 
-	if (nullptr != config.gpio_callback)
-	{
-		gpio_state = config.gpio_callback();
-	}
-	else
-	{
-		throw std::runtime_error("ERROR: gpio_callback is not set.");
-	}
+    if (nullptr != config.gpio_callback)
+    {
+            gpio_state = config.gpio_callback();
+    }
+    else
+    {
+            throw std::runtime_error("ERROR: gpio_callback is not set.");
+    }
 
-	// this might seem obvious but it is worth spelling it out in case GPIO were to be switched to active low
-	if (SPIBUSY_ACTIVE == gpio_state)
-	{
-		result = true;
-	}
-	else
-	{
-		result = false;
-	}
+    // this might seem obvious but it is worth spelling it out in case GPIO were to be switched to active low
+    if (SPIBUSY_ACTIVE == gpio_state)
+    {
+            result = true;
+    }
+    else
+    {
+            result = false;
+    }
 
     return (result);
 }
@@ -207,7 +207,7 @@ void spiboot(spi_config_t &config)
     uint32_t padded_data   = 16-(Size%16); //Extra bytes to make image size multiple of 16 
     uint32_t padding       = padded_data/4;
 
-	std::cout << "Booting via SPI ..." << std::endl;
+    std::cout << "Booting via SPI ..." << std::endl;
     std::cout << "Transferring appimage via SPI ..." << std::endl;
     
     /* calculation of CRC for Continuous Image Download Command */
@@ -218,52 +218,52 @@ void spiboot(spi_config_t &config)
     dummy_data = (uint32_t*)malloc(sizeof(uint32_t) * padding);
 
     for(uint32_t i=0; i < padding; i++)
-	{
+    {
         dummy_data[i]=0;
     }
 
-	if (NULL == dummy_data)
-	{
-		throw std::runtime_error("ERROR: failed to allocate SPI dummy data.");
-	}
+    if (NULL == dummy_data)
+    {
+        throw std::runtime_error("ERROR: failed to allocate SPI dummy data.");
+    }
 
-        /* Initiate transfer for Continuous Image Download Command */
-        uint32_t size = continuousImageDownloadCMDMsgSize; // / 2*(config.length/config.bits_per_word;
-        spi_transfer((uint8_t*)continuousImageDownloadCMD, NULL, size, config); 
-        std::cout << "transfer download command: " << size << std::endl;
-        
-        block_until_spi_ready(config);
+    /* Initiate transfer for Continuous Image Download Command */
+    uint32_t size = 17; //continuousImageDownloadCMDMsgSize; ///config.bits_per_word; // / 2*(config.length/config.bits_per_word;
+    spi_transfer((uint8_t*)continuousImageDownloadCMD, NULL, size, config); 
+    std::cout << "transfer download command: " << size << std::endl;
+    
+    block_until_spi_ready(config);
 
-	// Send image chunk 1
-        size = Size/2;
-        spi_transfer((uint8_t*)image, NULL, size, config);
-        std::cout << "transfer image chunk 1: " << size << std::endl;
-        spi_transfer((uint8_t*)image+(Size/2), NULL, size, config);
-        std::cout << "transfer image chunk 2: " << size << std::endl;	
+    // Send image chunk 1
+    size = Size/2;
+    spi_transfer((uint8_t*)image, NULL, size, config);
+    std::cout << "transfer image chunk 1: " << size << std::endl;
+    spi_transfer((uint8_t*)image+(Size/2), NULL, size, config);
+    std::cout << "transfer image chunk 2: " << size << std::endl;	
 
-        //TODO: set size here for dummy data
-        spi_transfer((uint8_t*)dummy_data, NULL, size, config);
-        std::cout << "transfer dummy data: " << size << std::endl;
-        block_until_spi_ready(config);
+    //TODO: set size here for dummy data
+    spi_transfer((uint8_t*)dummy_data, NULL, size, config);
+    std::cout << "transfer dummy data: " << size << std::endl;
+    block_until_spi_ready(config);
 
-        size = 16; //TODO: is this right?
-        spi_transfer((uint8_t*)continuousImageDownloadRESP, (uint8_t*)gMcspiRxBuffer1, size, config);
-        std::cout << "transfer continuous image downoad response: " << size << std::endl;
+    size = 16; //TODO: is this right?
+    spi_transfer((uint8_t*)continuousImageDownloadRESP, (uint8_t*)gMcspiRxBuffer1, size, config);
+    std::cout << "transfer continuous image downoad response: " << size << std::endl;
 
-        block_until_spi_ready(config);
+    block_until_spi_ready(config);
 
-        size = 8; //TODO: is this right?
-        spi_transfer((uint8_t*)SwitchToApplicationCMD, (uint8_t*)gMcspiRxBuffer2, size, config);
-        std::cout << "transfer switch to application command: " << size << std::endl;
+    size = 8; //TODO: is this right?
+    spi_transfer((uint8_t*)SwitchToApplicationCMD, (uint8_t*)gMcspiRxBuffer2, size, config);
+    std::cout << "transfer switch to application command: " << size << std::endl;
 
-        block_until_spi_ready(config);	
+    block_until_spi_ready(config);	
 
-        size = 8; //TODO: is this right?
-        spi_transfer((uint8_t*)SwitchToApplicationRESP, (uint8_t*)gMcspiRxBuffer3, size, config);
-        std::cout << "transfer switch to application response: " << size << std::endl;
-  
-        //TODO: put in check for success
-        std::cout << "Booting via SPI is completed." << std::endl;
+    size = 8; //TODO: is this right?
+    spi_transfer((uint8_t*)SwitchToApplicationRESP, (uint8_t*)gMcspiRxBuffer3, size, config);
+    std::cout << "transfer switch to application response: " << size << std::endl;
+
+    //TODO: put in check for success
+    std::cout << "Booting via SPI is completed." << std::endl;
 }
 
 void spi_close(spi_config_t &config)
