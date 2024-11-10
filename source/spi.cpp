@@ -227,46 +227,43 @@ void spiboot(spi_config_t &config)
 		throw std::runtime_error("ERROR: failed to allocate SPI dummy data.");
 	}
 
-    /* Initiate transfer for Continuous Image Download Command */
-	uint32_t size = continuousImageDownloadCMDMsgSize; // / 2*(config.length/config.bits_per_word;
-    spi_transfer((uint8_t*)continuousImageDownloadCMD, NULL, size, config); 
-	std::cout << "transfer download command: " << size << std::endl;
-
-    block_until_spi_ready(config);
+        /* Initiate transfer for Continuous Image Download Command */
+        uint32_t size = continuousImageDownloadCMDMsgSize; // / 2*(config.length/config.bits_per_word;
+        spi_transfer((uint8_t*)continuousImageDownloadCMD, NULL, size, config); 
+        std::cout << "transfer download command: " << size << std::endl;
+        
+        block_until_spi_ready(config);
 
 	// Send image chunk 1
-	size = Size/2;
-	spi_transfer((uint8_t*)image, NULL, size, config);
-	std::cout << "transfer image chunk 1: " << size << std::endl;
+        size = Size/2;
+        spi_transfer((uint8_t*)image, NULL, size, config);
+        std::cout << "transfer image chunk 1: " << size << std::endl;
+        spi_transfer((uint8_t*)image+(Size/2), NULL, size, config);
+        std::cout << "transfer image chunk 2: " << size << std::endl;	
 
-    spi_transfer((uint8_t*)image+(Size/2), NULL, size, config);
-    std::cout << "transfer image chunk 2: " << size << std::endl;	
+        //TODO: set size here for dummy data
+        spi_transfer((uint8_t*)dummy_data, NULL, size, config);
+        std::cout << "transfer dummy data: " << size << std::endl;
+        block_until_spi_ready(config);
 
-	//TODO: set size here for dummy data
-	spi_transfer((uint8_t*)dummy_data, NULL, size, config);
-	std::cout << "transfer dummy data: " << size << std::endl;
+        size = 16; //TODO: is this right?
+        spi_transfer((uint8_t*)continuousImageDownloadRESP, (uint8_t*)gMcspiRxBuffer1, size, config);
+        std::cout << "transfer continuous image downoad response: " << size << std::endl;
+
+        block_until_spi_ready(config);
+
+        size = 8; //TODO: is this right?
+        spi_transfer((uint8_t*)SwitchToApplicationCMD, (uint8_t*)gMcspiRxBuffer2, size, config);
+        std::cout << "transfer switch to application command: " << size << std::endl;
+
+        block_until_spi_ready(config);	
+
+        size = 8; //TODO: is this right?
+        spi_transfer((uint8_t*)SwitchToApplicationRESP, (uint8_t*)gMcspiRxBuffer3, size, config);
+        std::cout << "transfer switch to application response: " << size << std::endl;
   
-    block_until_spi_ready(config);
-
-	size = 16; //TODO: is this right?
-	spi_transfer((uint8_t*)continuousImageDownloadRESP, (uint8_t*)gMcspiRxBuffer1, size, config);
-	std::cout << "transfer continuous image downoad response: " << size << std::endl;
-
- 	block_until_spi_ready(config);
-
-
-	size = 8; //TODO: is this right?
-	spi_transfer((uint8_t*)SwitchToApplicationCMD, (uint8_t*)gMcspiRxBuffer2, size, config);
-	std::cout << "transfer switch to application command: " << size << std::endl;
-
-    block_until_spi_ready(config);	
-
-	size = 8; //TODO: is this right?
-	spi_transfer((uint8_t*)SwitchToApplicationRESP, (uint8_t*)gMcspiRxBuffer3, size, config);
-	std::cout << "transfer switch to application response: " << size << std::endl;
-  
-    //TODO: put in check for success
-	std::cout << "Booting via SPI is completed." << std::endl;
+        //TODO: put in check for success
+        std::cout << "Booting via SPI is completed." << std::endl;
 }
 
 void spi_close(spi_config_t &config)
