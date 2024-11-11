@@ -1,4 +1,4 @@
-cmake_minimum_required (VERSION 3.25)
+cmake_minimum_required (VERSION 3.20)
 project(xwrflasher)
 add_executable(xwrflasher spi.cpp gpio.cpp main.cpp)
 include_directories(${CMAKE_PREFIX_PATH}/include ${CMAKE_CURRENT_SOURCE_DIR})
