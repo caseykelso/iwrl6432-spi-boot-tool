@@ -24,7 +24,7 @@ int main(void)
 	spi_config.mode            = 0;
 	spi_config.speed           = 500000;
 	spi_config.bits_per_word   = 8;
-	spi_config.device          = "/dev/spidev2.0";
+	spi_config.device          = "/dev/spidev0.0";
 	spi_config.file_descriptor = 0;
 	spi_config.delay           = 10; //10 microseconds
 	spi_config.gpio_callback   = gpio_spi_busy;
