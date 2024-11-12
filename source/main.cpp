@@ -12,7 +12,7 @@ const uint8_t SPI_BUSY_PIN         = 22;
 //callback to get spi busy gpio state, this is important to decouple the spi and gpio implementations
 bool gpio_spi_busy()
 {
-	return gpio_read(&chip, &spi_busy);
+        return gpio_read(&chip, &spi_busy);
 }
 
 int main(void)
