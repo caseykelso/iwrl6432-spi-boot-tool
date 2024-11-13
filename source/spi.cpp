@@ -194,7 +194,7 @@ bool is_spi_busy(const spi_config_t config)
 
 void block_until_spi_ready(const spi_config_t config)
 {
-    while(!is_spi_busy(config))
+    while(is_spi_busy(config))
     {
         std::this_thread::sleep_for(std::chrono::milliseconds(config.gpio_sleep_ms));
     }
