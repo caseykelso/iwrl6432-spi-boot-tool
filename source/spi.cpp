@@ -42,7 +42,7 @@ uint32_t crcValue=0;
 DMA for continuous image download. It has the following format
 <MSG_CRC><SPI_CMD_TYPE><LONG_MSG_SIZE><RESERVED><SHORT_MSG><LONG_MSG>*/
 
-static uint32_t continuousImageDownloadCMD[]={0x0000,0x00100018,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000};
+static uint32_t continuousImageDownloadCMD[]={0x0001,0x00100019,0x0001,0x0000,0x0000,0x0000,0x0000,0x0000};
 
 /* The Image data should be multiple of 16 . dummy_data is used to send extra bytes 
 so that overall image size should become multiple of 16 */
