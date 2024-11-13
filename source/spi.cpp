@@ -285,6 +285,9 @@ void spiboot(spi_config_t config)
 
 void spi_close(spi_config_t &config)
 {
-    close(config.file_descriptor); //TODO: consider if this can be called twice in an error state, and if that is safe
+    if (-1 != config.file_descriptor)
+    {
+       close(config.file_descriptor); //TODO: consider if this can be called twice in an error state, and if that is safe
+    }
 }
 
