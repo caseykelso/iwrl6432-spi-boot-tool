@@ -250,7 +250,7 @@ void spiboot(spi_config_t config)
  
 
     // Send image chunk 1
-    size = Size/2;
+    size = 8; //Size/2;
     spi_transfer((uint8_t*)image, NULL, size, config);
     std::cout << "3" << std::endl; 
  
