@@ -4,6 +4,8 @@
 #include <gpiod.h>
 #include "gpio.h"
 
+static bool initialized = false;
+
 void gpio_init(struct gpiod_chip **chip, struct gpiod_line **line, uint8_t gpio_pin, std::string chip_name, bool input, std::string line_name)
 {
         int result = 0;
@@ -36,12 +38,18 @@ void gpio_init(struct gpiod_chip **chip, struct gpiod_line **line, uint8_t gpio_
 
             throw std::runtime_error("ERROR: Could not set "+line_name+" GPIO as a "+direction+".");
         }
+
+        initialized = true;
 }
 
 void gpio_free(struct gpiod_chip **chip, struct gpiod_line **line)
 {
-	gpiod_line_release(*line);
-	gpiod_chip_close(*chip);
+    if (initialized)
+    {
+        gpiod_line_release(*line);
+        gpiod_chip_close(*chip);
+        initialized = false;
+    }
 }
 
 bool gpio_read(struct gpiod_line *line)
