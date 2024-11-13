@@ -3,6 +3,7 @@
 #include <stdexcept>
 #include <thread>
 #include <chrono>
+#include <signal.h>
 #include <gpio.h>
 #include <functional>
 #include <spi.h>
@@ -22,9 +23,16 @@ bool gpio_spi_busy()
         return gpio_read(spi_busy);
 }
 
+void siginthandler(int param)
+{
+    std::cerr << "user forced program to quit" << std::endl;
+    exit(1);
+}
+
 int main(void)
 {
 	const std::string gpiod_chip_name("gpiochip0");
+        signal(SIGINT, siginthandler);
 
 	int          exit_code     = 0;
 	spi_config_t spi_config    = {};
