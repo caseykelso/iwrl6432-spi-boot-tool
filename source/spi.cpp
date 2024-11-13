@@ -202,7 +202,7 @@ void block_until_spi_ready(const spi_config_t config)
 
 //TODO: disable chip select in spidev
 /* Transferring appimage via SPI */
-void spiboot(spi_config_t &config)
+void spiboot(spi_config_t config)
 {   
     uint32_t padded_data   = 16-(Size%16); //Extra bytes to make image size multiple of 16 
     uint32_t padding       = padded_data/4;
