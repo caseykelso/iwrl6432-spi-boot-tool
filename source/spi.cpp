@@ -239,7 +239,7 @@ void spiboot(spi_config_t config)
     /* Initiate transfer for Continuous Image Download Command */
     uint32_t size = continuousImageDownloadCMDMsgSize; ///config.bits_per_word; // / 2*(config.length/config.bits_per_word;
 
-    while(true) {
+    //while(true) {
     //spi_transfer(tx, rx, 8, config); 
     spi_transfer((uint8_t*)continuousImageDownloadCMD, NULL, size, config); 
     }
