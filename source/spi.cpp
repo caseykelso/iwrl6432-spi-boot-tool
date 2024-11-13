@@ -227,9 +227,17 @@ void spiboot(spi_config_t &config)
         throw std::runtime_error("ERROR: failed to allocate SPI dummy data.");
     }
 
+    uint8_t tx[100];
+
+    for (uint8_t i = 0; i < 100; ++i)
+    {
+        tx[i] = (uint8_t)0xab;
+    }
+
     /* Initiate transfer for Continuous Image Download Command */
     uint32_t size = 17; //continuousImageDownloadCMDMsgSize; ///config.bits_per_word; // / 2*(config.length/config.bits_per_word;
-    spi_transfer((uint8_t*)continuousImageDownloadCMD, NULL, size, config); 
+    //spi_transfer((uint8_t*)continuousImageDownloadCMD, NULL, size, config); 
+    spi_transfer(tx, NULL, size, config); 
     std::cout << "transfer download command: " << size << std::endl;
     
     block_until_spi_ready(config);
