@@ -1,18 +1,25 @@
 #include <stdint.h>
 #include <iostream>
 #include <stdexcept>
+#include <thread>
+#include <chrono>
 #include <gpio.h>
 #include <functional>
 #include <spi.h>
+
 //#define SPI_TEST_PATTERN 1
-struct        gpiod_chip *chip     = nullptr;
-struct        gpiod_line *spi_busy = nullptr;
-const uint8_t SPI_BUSY_PIN         = 75; //make runtime configurable - RPI 22
+struct        gpiod_chip *chip         = nullptr;
+struct        gpiod_line *spi_busy     = nullptr;
+struct        gpiod_line *sensor_reset = nullptr;
+const uint8_t SPI_BUSY_PIN             = 73; //make runtime configurable - RPI 22
+const uint8_t IWRL6432_RESET_PIN       = 75;
+const int     IWRL6432_RESET_ACTIVE    = 0;
+const int     IWRL6432_RESET_INACTIVE  = 1;
 
 //callback to get spi busy gpio state, this is important to decouple the spi and gpio implementations
 bool gpio_spi_busy()
 {
-        return gpio_read(&chip, &spi_busy);
+        return gpio_read(spi_busy);
 }
 
 int main(void)
@@ -43,7 +50,8 @@ int main(void)
 
 	try 
 	{
-	   gpio_init(&chip, &spi_busy, SPI_BUSY_PIN, gpiod_chip_name);
+	   gpio_init(&chip, &spi_busy, SPI_BUSY_PIN, gpiod_chip_name, true, "spi_busy");
+           gpio_init(&chip, &sensor_reset, IWRL6432_RESET_PIN, gpiod_chip_name, false, "sensor_reset");
 	} 
 	catch(std::exception &e)
 	{
@@ -52,6 +60,11 @@ int main(void)
             exit_code = -1;
             return(exit_code);
 	}
+
+        // reset the IWRL6432
+        gpio_write(sensor_reset, IWRL6432_RESET_ACTIVE);
+        std::this_thread::sleep_for(std::chrono::milliseconds(500));
+        gpio_write(sensor_reset, IWRL6432_RESET_INACTIVE);
 
 #ifdef SPI_TEST_PATTERN
 	uint8_t tx[100];
@@ -81,6 +94,7 @@ int main(void)
 
 	spi_close(spi_config);
 	gpio_free(&chip, &spi_busy);
+        gpio_free(&chip, &sensor_reset);
 	return exit_code;
 }
 
