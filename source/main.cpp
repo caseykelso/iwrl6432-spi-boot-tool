@@ -16,6 +16,8 @@ const uint8_t SPI_BUSY_PIN             = 73; //make runtime configurable - RPI 2
 const uint8_t IWRL6432_RESET_PIN       = 75;
 const int     IWRL6432_RESET_ACTIVE    = 0;
 const int     IWRL6432_RESET_INACTIVE  = 1;
+spi_config_t  spi_config               = {};
+
 
 //callback to get spi busy gpio state, this is important to decouple the spi and gpio implementations
 bool gpio_spi_busy()
@@ -23,11 +25,28 @@ bool gpio_spi_busy()
         return gpio_read(spi_busy);
 }
 
+void release_resources()
+{
+    spi_close(spi_config);
+
+    if (nullptr != spi_busy)
+    {
+       gpio_free(&chip, &spi_busy);
+    }
+
+    if (nullptr != sensor_reset)
+    {
+        gpio_free(&chip, &sensor_reset);
+    }
+}
+
 void siginthandler(int param)
 {
     std::cerr << "user forced program to quit" << std::endl;
+    release_resources();
     exit(1);
 }
+
 
 int main(void)
 {
@@ -35,7 +54,6 @@ int main(void)
         signal(SIGINT, siginthandler);
 
 	int          exit_code     = 0;
-	spi_config_t spi_config    = {};
 	spi_config.mode            = 0;
 	spi_config.speed           = 500000;
 	spi_config.bits_per_word   = 8;
@@ -44,6 +62,13 @@ int main(void)
 	spi_config.delay           = 10; //10 microseconds
 	spi_config.gpio_callback   = gpio_spi_busy;
 	spi_config.gpio_sleep_ms   = 10;
+
+        while(true)
+        {
+            std::this_thread::sleep_for(std::chrono::milliseconds(500));
+        }
+
+
 
 	try 
 	{
@@ -55,6 +80,7 @@ int main(void)
             std::cerr << e.what() << std::endl;
             return(exit_code);
 	}
+
 
 	try 
 	{
@@ -100,9 +126,7 @@ int main(void)
 	}
 #endif
 
-	spi_close(spi_config);
-	gpio_free(&chip, &spi_busy);
-        gpio_free(&chip, &sensor_reset);
+        release_resources();
 	return exit_code;
 }
 
