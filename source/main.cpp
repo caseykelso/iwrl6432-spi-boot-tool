@@ -7,7 +7,7 @@
 #include <functional>
 #include <spi.h>
 
-#define SPI_TEST_PATTERN 1
+//#define SPI_TEST_PATTERN 1
 struct        gpiod_chip *chip         = nullptr;
 struct        gpiod_line *spi_busy     = nullptr;
 struct        gpiod_line *sensor_reset = nullptr;
