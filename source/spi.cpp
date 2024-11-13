@@ -243,12 +243,17 @@ void spiboot(spi_config_t config)
     //spi_transfer(tx, rx, 8, config); 
     spi_transfer((uint8_t*)continuousImageDownloadCMD, NULL, size, config); 
     std::cout << "transfer download command: " << size << std::endl;
-    
+   
+    std::cout << "1" << std::endl; 
     block_until_spi_ready(config);
+    std::cout << "2" << std::endl; 
+ 
 
     // Send image chunk 1
     size = Size/2;
     spi_transfer((uint8_t*)image, NULL, size, config);
+    std::cout << "3" << std::endl; 
+ 
     std::cout << "transfer image chunk 1: " << size << std::endl;
     spi_transfer((uint8_t*)image+(Size/2), NULL, size, config);
     std::cout << "transfer image chunk 2: " << size << std::endl;	
