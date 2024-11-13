@@ -238,10 +238,10 @@ void spiboot(spi_config_t config)
 
     /* Initiate transfer for Continuous Image Download Command */
     uint32_t size = 17; //continuousImageDownloadCMDMsgSize; ///config.bits_per_word; // / 2*(config.length/config.bits_per_word;
-    //spi_transfer((uint8_t*)continuousImageDownloadCMD, NULL, size, config); 
 
     while(true) {
-    spi_transfer(tx, rx, 8, config); 
+    //spi_transfer(tx, rx, 8, config); 
+    spi_transfer((uint8_t*)continuousImageDownloadCMD, NULL, size, config); 
     }
     std::cout << "transfer download command: " << size << std::endl;
     
