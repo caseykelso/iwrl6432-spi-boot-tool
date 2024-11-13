@@ -27,7 +27,14 @@ void gpio_init(struct gpiod_chip **chip, struct gpiod_line **line, uint8_t gpio_
 
         if (result < 0)
         {
-             throw std::runtime_error("ERROR: Could not set SPI_BUSY GPIO as a input.");
+            std::string direction = "input";
+
+            if (!input)
+            {
+                direction = "output";
+            }
+
+            throw std::runtime_error("ERROR: Could not set "+line_name+" GPIO as a "+direction+".");
         }
 }
 
