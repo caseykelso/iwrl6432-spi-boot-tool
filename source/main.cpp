@@ -63,13 +63,6 @@ int main(void)
 	spi_config.gpio_callback   = gpio_spi_busy;
 	spi_config.gpio_sleep_ms   = 10;
 
-        while(true)
-        {
-            std::this_thread::sleep_for(std::chrono::milliseconds(500));
-        }
-
-
-
 	try 
 	{
 	   spi_init(spi_config);
