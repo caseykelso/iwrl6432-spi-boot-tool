@@ -70,7 +70,7 @@ void spi_transfer(uint8_t const *tx, uint8_t const *rx, uint32_t length, spi_con
 		.speed_hz      = config.speed,
 		.delay_usecs   = config.delay,
 		.bits_per_word = config.bits_per_word,
-                .cs_change     = 0,
+                .cs_change     = 0, // has no impact on cs toggle between chunks, cs is still active, and cs_off is not available in this kernel version
 	};
 
         result = ioctl(config.file_descriptor, SPI_IOC_MESSAGE(1), &tr); 
@@ -87,7 +87,7 @@ void spi_transfer(uint8_t const *tx, uint8_t const *rx, uint32_t length, spi_con
 
 bool spi_init(spi_config_t &spi_config)
 {
-    bool          result       = true;
+        bool          result       = true;
 	int           spi_result   = 0;
 	const int32_t SPI_ERROR    = -1;
 
