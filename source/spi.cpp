@@ -158,9 +158,9 @@ bool spi_init(spi_config_t &spi_config)
 /* CRC Calculation for Continuous Image Download Command */
 void calculatecrc32()
 {
-        uint32_t padded_data=16-(Size%16);
-        continuousImageDownloadCMD[4]=Size+padded_data;
-        continuousImageDownloadCMD[5]=Size;
+        continuousImageDownloadCMD[4]=Size&&0x0000FF;
+        continuousImageDownloadCMD[5]=((Size&&0x00FF00) >> 2);
+        continuousImageDownloadCMD[6]=((Size&&0xFF0000) >> 4);
 	crcValue = crc32(0L, Z_NULL, 0);
 	crcValue = crc32(crcValue, (Bytef*)continuousImageDownloadCMD, APP_CRC_PATTERN_CNT+1);
 }
@@ -216,7 +216,7 @@ void spiboot(spi_config_t config)
     /* calculation of CRC for Continuous Image Download Command */
     calculatecrc32();
     
-//    continuousImageDownloadCMD[0]=crcValue;
+    continuousImageDownloadCMD[0]=crcValue;
 
     dummy_data = (uint32_t*)malloc(sizeof(uint32_t) * padding);
 
