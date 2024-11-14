@@ -47,6 +47,7 @@ static uint32_t continuousImageDownloadCMD[]={0x0000,0x00100018,0x0000,0x0000,0x
 /* The Image data should be multiple of 16 . dummy_data is used to send extra bytes 
 so that overall image size should become multiple of 16 */
 
+const uint32_t SPIDEV_MAX_BLOCK_SIZE = 4096;
 uint32_t* dummy_data = NULL;
 uint32_t continuousImageDownloadRESP[8] = {0};
 uint32_t SwitchToApplicationCMD[] = {0x9DFAC3F2,0x0000001A,0x0000,0x0000}; // SWITCH_TO_APPLICATION_CMD
@@ -246,16 +247,29 @@ void spiboot(spi_config_t config)
     block_until_spi_ready(config);
     std::cout << "2" << std::endl; 
 
-    // Send image chunk 1
-    size = 4096; //Size/2;
-    std::cout << "size of image is: " << Size << std::endl;
-    std::cout << "ready to send chunk 1 of size: " << size << std::endl;
-    spi_transfer((uint8_t*)image, NULL, size, config);
-    std::cout << "3" << std::endl; 
- 
-    std::cout << "transfer image chunk 1: " << size << std::endl;
-    spi_transfer((uint8_t*)image+(Size/2), NULL, size, config);
-    std::cout << "transfer image chunk 2: " << size << std::endl;	
+    // Send firmware in SPIDEV_MAX_BLOCK_SIZE chunks
+    for (uint32_t i = 0; i < Size; i = i + SPIDEV_MAX_BLOCK_SIZE)
+    {
+        uint32_t block_size = SPIDEV_MAX_BLOCK_SIZE;
+
+        if (i >= Size)
+        {
+            std::cout << "firmware programming stop case" << std::endl;
+            break;
+        }
+        else if ((Size - i) < SPIDEV_MAX_BLOCK_SIZE) // remainder case
+        {
+            block_size = Size - i;
+            std::cout << "firmware programming last block of size: " << block_size << std::endl;
+            //TODO: padding?
+        }
+        else // send a full block
+        {
+            std::cout << "*" << std::endl;
+        }
+
+        spi_transfer((uint8_t*)image + i, NULL, block_size, config);
+    }
 
     //TODO: set size here for dummy data
     spi_transfer((uint8_t*)dummy_data, NULL, size, config);
