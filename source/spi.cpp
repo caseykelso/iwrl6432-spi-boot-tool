@@ -43,6 +43,7 @@ DMA for continuous image download. It has the following format
 <MSG_CRC><SPI_CMD_TYPE><LONG_MSG_SIZE><RESERVED><SHORT_MSG><LONG_MSG>*/
 
 static uint32_t continuousImageDownloadCMD[]={0x0000,0x00100018,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000};
+static uint32_t GET_RBL_STATUS_CMD[]={0x0000,0x00100011,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000};
 
 /* The Image data should be multiple of 16 . dummy_data is used to send extra bytes 
 so that overall image size should become multiple of 16 */
@@ -247,6 +248,12 @@ void spiboot(spi_config_t config)
     std::cout << "1" << std::endl; 
     block_until_spi_ready(config);
     std::cout << "2" << std::endl; 
+
+    spi_transfer((uint8_t*)GET_RBL_STATUS_CMD , NULL, size, config); 
+    std::cout << "transfer download command: " << size << std::endl;
+   
+    std::cout << "3" << std::endl; 
+    block_until_spi_ready(config);
 
     // Send firmware in SPIDEV_MAX_BLOCK_SIZE chunks
     for (uint32_t i = 0; i < Size; i = i + SPIDEV_MAX_BLOCK_SIZE)
