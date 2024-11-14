@@ -239,15 +239,12 @@ void spiboot(spi_config_t config)
     /* Initiate transfer for Continuous Image Download Command */
     uint32_t size = continuousImageDownloadCMDMsgSize; ///config.bits_per_word; // / 2*(config.length/config.bits_per_word;
 
-    //while(true) {
-    //spi_transfer(tx, rx, 8, config); 
     spi_transfer((uint8_t*)continuousImageDownloadCMD, NULL, size, config); 
     std::cout << "transfer download command: " << size << std::endl;
    
     std::cout << "1" << std::endl; 
     block_until_spi_ready(config);
     std::cout << "2" << std::endl; 
- 
 
     // Send image chunk 1
     size = 4096; //Size/2;
