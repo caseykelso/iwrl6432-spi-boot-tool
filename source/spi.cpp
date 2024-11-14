@@ -70,6 +70,7 @@ void spi_transfer(uint8_t const *tx, uint8_t const *rx, uint32_t length, spi_con
 		.speed_hz      = config.speed,
 		.delay_usecs   = config.delay,
 		.bits_per_word = config.bits_per_word,
+                .cs_change     = 0,
 	};
 
         result = ioctl(config.file_descriptor, SPI_IOC_MESSAGE(1), &tr); 
