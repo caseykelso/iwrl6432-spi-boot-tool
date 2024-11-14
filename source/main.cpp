@@ -91,7 +91,7 @@ int main(void)
         // reset the IWRL6432
         gpio_write(sensor_reset, IWRL6432_RESET_ACTIVE);
         std::this_thread::sleep_for(std::chrono::milliseconds(500));
-//        gpio_write(sensor_reset, IWRL6432_RESET_INACTIVE);
+        gpio_write(sensor_reset, IWRL6432_RESET_INACTIVE);
 
 #ifdef SPI_TEST_PATTERN
 	uint8_t tx[100];
