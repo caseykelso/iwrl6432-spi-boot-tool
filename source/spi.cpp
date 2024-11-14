@@ -216,7 +216,7 @@ void spiboot(spi_config_t config)
     /* calculation of CRC for Continuous Image Download Command */
     calculatecrc32();
     
-    continuousImageDownloadCMD[0]=crcValue;
+//    continuousImageDownloadCMD[0]=crcValue;
 
     dummy_data = (uint32_t*)malloc(sizeof(uint32_t) * padding);
 
