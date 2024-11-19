@@ -27,6 +27,8 @@ bool gpio_spi_busy()
 
 void release_resources()
 {
+    // put the IWRL6432 into reset on exit
+    gpio_write(sensor_reset, IWRL6432_RESET_ACTIVE);
     spi_close(spi_config);
 
     if (nullptr != spi_busy)
@@ -92,6 +94,7 @@ int main(void)
         gpio_write(sensor_reset, IWRL6432_RESET_ACTIVE);
         std::this_thread::sleep_for(std::chrono::milliseconds(500));
         gpio_write(sensor_reset, IWRL6432_RESET_INACTIVE);
+        std::this_thread::sleep_for(std::chrono::milliseconds(500));
 
 #ifdef SPI_TEST_PATTERN
 	uint8_t tx[100];
