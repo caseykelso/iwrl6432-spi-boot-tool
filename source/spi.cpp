@@ -246,15 +246,19 @@ void spiboot(spi_config_t config)
     std::cout << "transfer download command: " << size << std::endl;
    
     std::cout << "1" << std::endl; 
+    std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+ 
     block_until_spi_ready(config);
     std::cout << "2" << std::endl; 
 
+#if 0
     spi_transfer((uint8_t*)GET_RBL_STATUS_CMD , NULL, size, config); 
     std::cout << "transfer download command: " << size << std::endl;
-   
     std::cout << "3" << std::endl; 
     block_until_spi_ready(config);
 
+#endif 
+#if 0
     // Send firmware in SPIDEV_MAX_BLOCK_SIZE chunks
     for (uint32_t i = 0; i < Size; i = i + SPIDEV_MAX_BLOCK_SIZE)
     {
@@ -301,6 +305,7 @@ void spiboot(spi_config_t config)
     std::cout << "transfer switch to application response: " << size << std::endl;
 
     //TODO: put in check for success
+#endif
     std::cout << "Booting via SPI is completed." << std::endl;
 }
 
