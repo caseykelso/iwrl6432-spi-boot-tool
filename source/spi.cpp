@@ -100,7 +100,7 @@ void spi_transfer(uint8_t *tx, uint8_t *rx, uint32_t length, spi_config_t config
 #ifdef SPI_REVERSE_BIT_ORDER
         for (uint32_t i = 0; i < length; ++i)
         {
-            *tx[i] = reverse_bits(*tx[i]);
+            tx[i] = reverse_bits(tx[i]);
         }
 #endif // SPI_REVERSE_BIT_ORDER
 
