@@ -92,15 +92,15 @@ bool spi_init(spi_config_t &spi_config)
 	int           spi_result   = 0;
 	const int32_t SPI_ERROR    = -1;
 
-    spi_config.file_descriptor = open(spi_config.device.c_str(), O_RDWR);
+        spi_config.file_descriptor = open(spi_config.device.c_str(), O_RDWR);
 
-    if (0 > spi_config.file_descriptor)
+        if (0 > spi_config.file_descriptor)
 	{
 		close(spi_config.file_descriptor);
 		throw std::runtime_error("ERROR: Could not open SPI device.");
 	}
 
-    spi_result = ioctl(spi_config.file_descriptor, SPI_IOC_WR_MODE, &spi_config.mode);
+        spi_result = ioctl(spi_config.file_descriptor, SPI_IOC_WR_MODE, &spi_config.mode);
 
 	if (SPI_ERROR == spi_result)
 	{
