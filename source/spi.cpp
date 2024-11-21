@@ -20,7 +20,7 @@
 #include <chrono>
 #include <zlib.h>
 
-#define SPI_REVERSE_BIT_ORDER 1
+//#define SPI_REVERSE_BIT_ORDER 1
 
 /* Size of Continuous Image Download Command */
 #define continuousImageDownloadCMDMsgSize   (32U)
@@ -129,7 +129,7 @@ bool spi_init(spi_config_t &spi_config)
 		close(spi_config.file_descriptor);
 		throw std::runtime_error("ERROR: Could not open SPI device.");
 	}
-
+        
         spi_result = ioctl(spi_config.file_descriptor, SPI_IOC_WR_MODE, &spi_config.mode);
 
 	if (SPI_ERROR == spi_result)
@@ -145,6 +145,23 @@ bool spi_init(spi_config_t &spi_config)
 		result = false;
 		throw std::runtime_error("ERROR: Cannot get SPI mode.");
 	}
+        
+        spi_result = ioctl(spi_config.file_descriptor, SPI_IOC_WR_LSB_FIRST, &spi_config.mode);
+
+	if (SPI_ERROR == spi_result)
+	{
+		result = false;
+		throw std::runtime_error("ERROR: Cannot set SPI bit order.");
+	}
+
+	spi_result = ioctl(spi_config.file_descriptor, SPI_IOC_RD_LSB_FIRST, &spi_config.mode);
+
+	if (SPI_ERROR == spi_result)
+	{
+		result = false;
+		throw std::runtime_error("ERROR: Cannot get SPI bit order.");
+	}
+
 
 	spi_result = ioctl(spi_config.file_descriptor, SPI_IOC_WR_BITS_PER_WORD, &spi_config.bits_per_word);
 
