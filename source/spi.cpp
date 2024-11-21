@@ -1,5 +1,6 @@
 #include <iostream>
 #include <stdint.h>
+#include <array>
 #include <sys/ioctl.h>
 #include <linux/types.h>
 #include <linux/spi/spidev.h>
@@ -59,7 +60,25 @@ uint32_t gMcspiRxBuffer1[8]={0};
 uint32_t gMcspiRxBuffer2[4]={0};
 uint32_t gMcspiRxBuffer3[4]={0};
 
-void spi_transfer(uint8_t const *tx, uint8_t const *rx, uint32_t length, spi_config_t config)
+
+uint8_t reverse_bits(uint8_t n) 
+{
+    static constexpr std::array<uint8_t, 256> table{[]() constexpr
+    {
+            constexpr size_t SIZE = 256;
+            std::array<uint8_t, SIZE> result{};
+
+            for (size_t i = 0; i < SIZE; ++i)
+            {
+                result[i] = (i * 0x0202020202ULL & 0x010884422010ULL) % 0x3ff;
+            }
+            return result;
+    }()};
+
+    return table[n];
+}
+
+void spi_transfer(uint8_t *tx, uint8_t *rx, uint32_t length, spi_config_t config)
 {
 	int result = 0;
 
@@ -73,6 +92,13 @@ void spi_transfer(uint8_t const *tx, uint8_t const *rx, uint32_t length, spi_con
 		.bits_per_word = config.bits_per_word,
                 .cs_change     = 0, // has no impact on cs toggle between chunks, cs is still active, and cs_off is not available in this kernel version
 	};
+
+        // reverse bit order
+        // TODO: need to revisit, we do not want to mutate the tx buffer, this will need to be a copy
+        for (uint32_t i = 0; i < length; ++i)
+        {
+            *tx = reverse_bits(*tx);
+        }
 
         result = ioctl(config.file_descriptor, SPI_IOC_MESSAGE(1), &tr); 
 
