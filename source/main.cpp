@@ -57,7 +57,7 @@ int main(void)
 
 	int          exit_code     = 0;
 	spi_config.mode            = 0;
-	spi_config.speed           = 20000000;
+	spi_config.speed           = 1000000;
 	spi_config.bits_per_word   = 8;
 	spi_config.device          = "/dev/spidev0.0"; // make runtime configurable
 	spi_config.file_descriptor = 0;
