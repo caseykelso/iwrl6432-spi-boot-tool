@@ -20,6 +20,8 @@
 #include <chrono>
 #include <zlib.h>
 
+#define SPI_REVERSE_BIT_ORDER 1
+
 /* Size of Continuous Image Download Command */
 #define continuousImageDownloadCMDMsgSize   (32U)
 #define APP_CRC_CHANNEL                     (CRC_CHANNEL_1)
@@ -95,10 +97,12 @@ void spi_transfer(uint8_t *tx, uint8_t *rx, uint32_t length, spi_config_t config
 
         // reverse bit order
         // TODO: need to revisit, we do not want to mutate the tx buffer, this will need to be a copy
+#ifdef SPI_REVERSE_BIT_ORDER
         for (uint32_t i = 0; i < length; ++i)
         {
-            *tx = reverse_bits(*tx);
+            *tx[i] = reverse_bits(*tx[i]);
         }
+#endif // SPI_REVERSE_BIT_ORDER
 
         result = ioctl(config.file_descriptor, SPI_IOC_MESSAGE(1), &tr); 
 
