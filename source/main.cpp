@@ -11,6 +11,9 @@
 #include <zlib.h>
 #include "crc32.hpp"
 #include "crc32c/crc32c.h"
+extern "C" {
+#include "crc.h"
+}
 
 #define CALC32_DUMMY 1
 //#define SPI_TEST_PATTERN 1
@@ -23,8 +26,9 @@ const int     IWRL6432_RESET_ACTIVE    = 0;
 const int     IWRL6432_RESET_INACTIVE  = 1;
 spi_config_t  spi_config               = {};
 
+const uint8_t DUMMY_SIZE = 12;
 uint32_t DUMMY_CRC_VALUE = { 0x28306198 };
-uint8_t DUMMY_CRC_MESSAGE[] = { 0x00, 0x1B, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x15, 0x00, 0x00, 0xB5, 0x06, 0x15, 0x79, 0xBB, 0x97, 0x55, 0x79, 0xBB, 0x97, 0x55, 0x79, 0xBB, 0x97, 0x55, 0x79 };
+uint8_t DUMMY_CRC_MESSAGE[] = { 0x00, 0x1B, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x15, 0x00, 0x00};
 
 uint32_t google_crc32_calc(uint8_t data[], uint32_t length)
 {
@@ -44,6 +48,13 @@ uint32_t cpp11_crc32_calc()
         std::vector<uint8_t> v(std::begin(DUMMY_CRC_MESSAGE), std::end(DUMMY_CRC_MESSAGE));
         uint32_t result = crc32<IEEE8023_CRC32_POLYNOMIAL>(0xFFFFFFFF, v.begin(), v.end());
         return result;
+}
+
+uint32_t my_crc32_calc()
+{
+    F_CRC_InicializaTabla();
+    uint32_t result = F_CRC_CalculaCheckSum(DUMMY_CRC_MESSAGE, DUMMY_SIZE);
+    return result;
 }
 
 
@@ -81,12 +92,14 @@ void siginthandler(int param)
 int main(void)
 {
 #ifdef CALC32_DUMMY
-   uint32_t google_dummy_crc32 = google_crc32_calc(DUMMY_CRC_MESSAGE, 28);
-   uint32_t zlib_dummy_crc32   = zlib_crc32_calc(DUMMY_CRC_MESSAGE, 28);
+   uint32_t google_dummy_crc32 = google_crc32_calc(DUMMY_CRC_MESSAGE, DUMMY_SIZE);
+   uint32_t zlib_dummy_crc32   = zlib_crc32_calc(DUMMY_CRC_MESSAGE, DUMMY_SIZE);
    uint32_t cpp11_dummy_crc32  = cpp11_crc32_calc();
+   uint32_t my_crc32           = my_crc32_calc();
    std::cout << "google dummy crc32: " << std::hex << google_dummy_crc32 << std::endl;
    std::cout << "zlib dummy crc32  : " << std::hex << zlib_dummy_crc32 << std::endl;
    std::cout << "cpp11 dummy crc32 : " << std::hex << cpp11_dummy_crc32 << std::endl;
+   std::cout << "my crc32          : " << std::hex << my_crc32 << std::endl;
    std::cout << "expected crc32: 0x28306198" << std::endl;
 #else
 	const std::string gpiod_chip_name("gpiochip0");
