@@ -46,8 +46,7 @@ DMA for continuous image download. It has the following format
 static uint32_t continuousImageDownloadCMD[]={0x0000,0x00100018,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000};
 //static uint32_t continuousImageDownloadCMD[]={0x0000,0x00100018,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000};
 //static uint32_t continuousImageDownloadCMD[]={0x00000000, 0x10001800, 0x00000000, 0x0000000, 0x0000000, 0x0000000, 0x00000000, 0x0000000 };
-//static uint32_t GET_RBL_STATUS_CMD[]={0x00000000, 0x11001000, 0x00000000, 0x00000000};
-
+static uint32_t GET_RBL_STATUS_CMD[]={0xd52302a4, 0x00100000, 0x00000000, 0x00000000};
 /* The Image data should be multiple of 16 . dummy_data is used to send extra bytes 
 so that overall image size should become multiple of 16 */
 
@@ -56,7 +55,7 @@ uint32_t* dummy_data = NULL;
 uint32_t continuousImageDownloadRESP[8] = {0};
 uint32_t SwitchToApplicationCMD[] = {0x9DFAC3F2,0x0000001A,0x0000,0x0000}; // SWITCH_TO_APPLICATION_CMD
 uint32_t SwitchToApplicationRESP[] = {0x0000,0x0000,0x0000,0x0000}; // SWITCH_TO_APPLICATION_RESP
-uint32_t GET_RBL_STATUS_CMD[] = {0x0, 00100000, 0, 0};
+//uint32_t GET_RBL_STATUS_CMD[] = {0x0, 00100000, 0, 0};
 
 /* Receive buffer after sending Footer commands*/
 uint32_t gMcspiRxBuffer1[8]={0};
@@ -289,7 +288,7 @@ void spiboot(spi_config_t config)
 
     /* Initiate transfer for Continuous Image Download Command */
     uint32_t size = continuousImageDownloadCMDMsgSize; ///config.bits_per_word; // / 2*(config.length/config.bits_per_word;
-#define GET_STATUS 1
+//#define GET_STATUS 1
 #if GET_STATUS
     spi_transfer((uint8_t*)GET_RBL_STATUS_CMD, NULL, 16, config);
     std::cout << "waiting" << std::endl;
@@ -302,7 +301,7 @@ void spiboot(spi_config_t config)
     std::cout << "waiting" << std::endl;
     block_until_spi_ready(config);
 #endif
-//#define APPLICATION_SWITCH 1
+#define APPLICATION_SWITCH 1
 #if APPLICATION_SWITCH
     spi_transfer((uint8_t*)SwitchToApplicationCMD, rx, 16, config);
     std::cout << "waiting" << std::endl;

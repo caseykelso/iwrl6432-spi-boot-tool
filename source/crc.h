@@ -106,7 +106,7 @@ crc-64-jones            0xAD93D23594C935A9	True        0xFFFFFFFFFFFFFFFF	0x0000
 
 
 //Indicate here the CRC algorithm that you want to use
-#define CRC_32_BZIP2
+#define CRC_32
 
 //Indicate here if you want to do the calculation using a LookupTable
 #define CALCULATE_LOOKUPTABLE   FALSE
@@ -172,9 +172,9 @@ typedef uint32_t crc;
 #elif defined(CRC_32)
 
 typedef uint32_t crc;
-#define POLYNOMIAL              0x82608EDB
-//#define POLYNOMIAL		0x04C11DB7
-#define POLYNOMIAL              0xE100CAFE
+//#define POLYNOMIAL              0x82608EDB
+#define POLYNOMIAL		0x04C11DB7
+//#define POLYNOMIAL              0xE100CAFE
 #define INITIAL_VALUE           0xFFFFFFFF
 #define FINAL_XOR_VALUE		0xFFFFFFFF
 #define REVERSED_DATA           TRUE

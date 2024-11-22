@@ -1,3 +1,7 @@
+//#define CALC32_DUMMY 1
+//#define SPI_TEST_PATTERN 1
+
+
 #include <stdint.h>
 #include <iostream>
 #include <stdexcept>
@@ -9,14 +13,14 @@
 #include <functional>
 #include <spi.h>
 #include <zlib.h>
+#ifdef CALC32_DUMMY
 #include "crc32.hpp"
 #include "crc32c/crc32c.h"
+#endif //CALC32_DUMMY
 extern "C" {
 #include "crc.h"
 }
 
-#define CALC32_DUMMY 1
-//#define SPI_TEST_PATTERN 1
 struct        gpiod_chip *chip         = nullptr;
 struct        gpiod_line *spi_busy     = nullptr;
 struct        gpiod_line *sensor_reset = nullptr;
@@ -29,7 +33,8 @@ spi_config_t  spi_config               = {};
 const uint8_t DUMMY_SIZE = 12;
 uint32_t DUMMY_CRC_VALUE = { 0x28306198 };
 uint8_t DUMMY_CRC_MESSAGE[] = { 0x00, 0x1B, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x15, 0x00, 0x00};
-
+uint8_t TEST_GET_RBL_STATUS_CMD[] = {0x0, 0x10, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0 };
+#ifdef CALC32_DUMMY
 uint32_t google_crc32_calc(uint8_t data[], uint32_t length)
 {
         uint32_t result = crc32c::Crc32c(data, length);
@@ -53,10 +58,11 @@ uint32_t cpp11_crc32_calc()
 uint32_t my_crc32_calc()
 {
     F_CRC_InicializaTabla();
-    uint32_t result = F_CRC_CalculaCheckSum(DUMMY_CRC_MESSAGE, DUMMY_SIZE);
+    uint32_t result = F_CRC_CalculaCheckSum(TEST_GET_RBL_STATUS_CMD, DUMMY_SIZE);
+    //uint32_t result = F_CRC_CalculaCheckSum(DUMMY_CRC_MESSAGE, DUMMY_SIZE);
     return result;
 }
-
+#endif //CALC32_DUMMY
 
 //callback to get spi busy gpio state, this is important to decouple the spi and gpio implementations
 bool gpio_spi_busy()
