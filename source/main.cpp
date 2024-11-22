@@ -7,7 +7,9 @@
 #include <gpio.h>
 #include <functional>
 #include <spi.h>
+#include <zlib.h>
 
+#define CALC32_DUMMY 1
 //#define SPI_TEST_PATTERN 1
 struct        gpiod_chip *chip         = nullptr;
 struct        gpiod_line *spi_busy     = nullptr;
@@ -18,6 +20,15 @@ const int     IWRL6432_RESET_ACTIVE    = 0;
 const int     IWRL6432_RESET_INACTIVE  = 1;
 spi_config_t  spi_config               = {};
 
+uint32_t DUMMY_CRC_VALUE = { 0x28306198 };
+uint8_t DUMMY_CRC_MESSAGE[] = { 0x00, 0x1B, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x15, 0x00, 0x00, 0xB5, 0x06, 0x15, 0x79, 0xBB, 0x97, 0x55, 0x79, 0xBB, 0x97, 0x55, 0x79, 0xBB, 0x97, 0x55, 0x79 };
+
+uint32_t crc32_calc(uint8_t data[], uint32_t length)
+{
+	uint32_t result = crc32(0L, Z_NULL, 0); // null seed
+	result = crc32(result, (Bytef*)data, length);
+        return result;
+}
 
 //callback to get spi busy gpio state, this is important to decouple the spi and gpio implementations
 bool gpio_spi_busy()
@@ -52,6 +63,11 @@ void siginthandler(int param)
 
 int main(void)
 {
+#ifdef CALC32_DUMMY
+   uint32_t dummy_crc32 = crc32_calc(DUMMY_CRC_MESSAGE, 28);
+   std::cout << "dummy crc32: " << std::hex << dummy_crc32 << std::endl;
+   std::cout << "expected crc32: 0x28306198" << std::endl;
+#else
 	const std::string gpiod_chip_name("gpiochip0");
         signal(SIGINT, siginthandler);
 
@@ -124,5 +140,6 @@ int main(void)
 
         release_resources();
 	return exit_code;
+#endif // CALC32_DUMMY
 }
 

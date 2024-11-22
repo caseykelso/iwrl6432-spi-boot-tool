@@ -21,7 +21,6 @@
 #include <zlib.h>
 
 //#define SPI_REVERSE_BIT_ORDER 1
-#define CALC32_DUMMY 1
 
 /* Size of Continuous Image Download Command */
 #define continuousImageDownloadCMDMsgSize   (32U)
@@ -59,9 +58,6 @@ uint32_t SwitchToApplicationCMD[] = {0x9DFAC3F2,0x0000001A,0x0000,0x0000}; // SW
 uint32_t SwitchToApplicationRESP[] = {0x0000,0x0000,0x0000,0x0000}; // SWITCH_TO_APPLICATION_RESP
 uint32_t GET_RBL_STATUS_CMD[] = {0x0, 00100000, 0, 0};
 
-uint32_t DUMMY_CRC_VALUE = { 0x28306198 };
-uint8_t DUMMY_CRC_MESSAGE[] = { 0x00, 0x1B, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x15, 0x00, 0x00, 0xB5, 0x06, 0x15, 0x79, 0xBB, 0x97, 0x55, 0x79, 0xBB, 0x97, 0x55, 0x79, 0xBB, 0x97, 0x55, 0x79 };
-
 /* Receive buffer after sending Footer commands*/
 uint32_t gMcspiRxBuffer1[8]={0};
 uint32_t gMcspiRxBuffer2[4]={0};
@@ -83,13 +79,6 @@ uint8_t reverse_bits(uint8_t n)
     }()};
 
     return table[n];
-}
-
-uint32_t crc32_calc(uint8_t data[], uint32_t length)
-{
-	uint32_t result = crc32(0L, Z_NULL, 0); // null seed
-	result = crc32(result, (Bytef*)data, length);
-        return result;
 }
 
 void spi_transfer(uint8_t *tx, uint8_t *rx, uint32_t length, spi_config_t config)
@@ -275,7 +264,7 @@ void spiboot(spi_config_t config)
     /* calculation of CRC for Continuous Image Download Command */
     calculatecrc32();
     
-    continuousImageDownloadCMD[0]=crcValue;
+//    continuousImageDownloadCMD[0]=crcValue;
 
     dummy_data = (uint32_t*)malloc(sizeof(uint32_t) * padding);
 
@@ -298,21 +287,28 @@ void spiboot(spi_config_t config)
 
     uint8_t rx[100];
 
-#ifdef CALC32_DUMMY
-   uint32_t dummy_crc32 = crc32_calc(DUMMY_CRC_MESSAGE, 28);
-   std::cout << "dummy crc32: " << std::hex << dummy_crc32 << std::endl;
-   std::cout << "expected crc32: 0x28306198" << std::endl;
-#endif //CALC32_DUMMY
-
     /* Initiate transfer for Continuous Image Download Command */
     uint32_t size = continuousImageDownloadCMDMsgSize; ///config.bits_per_word; // / 2*(config.length/config.bits_per_word;
+#define GET_STATUS 1
+#if GET_STATUS
+    spi_transfer((uint8_t*)GET_RBL_STATUS_CMD, NULL, 16, config);
+    std::cout << "waiting" << std::endl;
+    block_until_spi_ready(config);
+#endif
 
-//    spi_transfer((uint8_t*)GET_RBL_STATUS_CMD, NULL, 16, config);
 //    spi_transfer((uint8_t*)continuousImageDownloadCMD, NULL, size, config); 
+#if CONTINUOUS_DOWNLOAD
+    spi_transfer((uint8_t*)continuousImageDownloadCMD, rx, 32, config);
+    std::cout << "waiting" << std::endl;
+    block_until_spi_ready(config);
+#endif
+//#define APPLICATION_SWITCH 1
+#if APPLICATION_SWITCH
     spi_transfer((uint8_t*)SwitchToApplicationCMD, rx, 16, config);
     std::cout << "waiting" << std::endl;
     block_until_spi_ready(config);
     spi_transfer((uint8_t*)SwitchToApplicationRESP, rx, 32, config);
+#endif
  
 //    std::this_thread::sleep_for(std::chrono::milliseconds(1000));
  

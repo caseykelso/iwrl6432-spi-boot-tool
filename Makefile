@@ -48,6 +48,9 @@ toolchain.waffle: submodule
 
 ci: toolchain.waffle firmware firmware.convert.appimage.to.hex build.waffle build.x86
 
+run: .FORCE
+	$(BUILD.DIR)/xwrflasher
+
 gpiod: .FORCE
 	rm -rf $(GPIOD.DIR)
 	mkdir -p $(DOWNLOADS.DIR)
