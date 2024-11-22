@@ -21,10 +21,10 @@
 #include <zlib.h>
 
 //#define SPI_REVERSE_BIT_ORDER 1
+#define CALC32_DUMMY 1
 
 /* Size of Continuous Image Download Command */
 #define continuousImageDownloadCMDMsgSize   (32U)
-
 /* Data Size for calculation of CRC of Continuous Image Download Command */
 #define APP_USER_DATA_SIZE                  ((uint32_t) 28U)
 /* CRC pattern size i.e 32 bits */
@@ -60,7 +60,7 @@ uint32_t SwitchToApplicationRESP[] = {0x0000,0x0000,0x0000,0x0000}; // SWITCH_TO
 uint32_t GET_RBL_STATUS_CMD[] = {0x0, 00100000, 0, 0};
 
 uint32_t DUMMY_CRC_VALUE = { 0x28306198 };
-uint32_t DUMMY_CRC_MESSAGE[] = { 0x001B0000 0x00000000 0x00150000 0xB5061579 0xBB975579 0xBB975579 0xBB975579 };
+uint8_t DUMMY_CRC_MESSAGE[] = { 0x00, 0x1B, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x15, 0x00, 0x00, 0xB5, 0x06, 0x15, 0x79, 0xBB, 0x97, 0x55, 0x79, 0xBB, 0x97, 0x55, 0x79, 0xBB, 0x97, 0x55, 0x79 };
 
 /* Receive buffer after sending Footer commands*/
 uint32_t gMcspiRxBuffer1[8]={0};
@@ -83,6 +83,13 @@ uint8_t reverse_bits(uint8_t n)
     }()};
 
     return table[n];
+}
+
+uint32_t crc32_calc(uint8_t data[], uint32_t length)
+{
+	uint32_t result = crc32(0L, Z_NULL, 0); // null seed
+	result = crc32(result, (Bytef*)data, length);
+        return result;
 }
 
 void spi_transfer(uint8_t *tx, uint8_t *rx, uint32_t length, spi_config_t config)
@@ -290,6 +297,12 @@ void spiboot(spi_config_t config)
     }
 
     uint8_t rx[100];
+
+#ifdef CALC32_DUMMY
+   uint32_t dummy_crc32 = crc32_calc(DUMMY_CRC_MESSAGE, 28);
+   std::cout << "dummy crc32: " << std::hex << dummy_crc32 << std::endl;
+   std::cout << "expected crc32: 0x28306198" << std::endl;
+#endif //CALC32_DUMMY
 
     /* Initiate transfer for Continuous Image Download Command */
     uint32_t size = continuousImageDownloadCMDMsgSize; ///config.bits_per_word; // / 2*(config.length/config.bits_per_word;
