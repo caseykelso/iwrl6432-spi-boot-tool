@@ -46,7 +46,9 @@ DMA for continuous image download. It has the following format
 <MSG_CRC><SPI_CMD_TYPE><LONG_MSG_SIZE><RESERVED><SHORT_MSG><LONG_MSG>*/
 
 static uint32_t continuousImageDownloadCMD[]={0x0000,0x00100018,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000};
-static uint32_t GET_RBL_STATUS_CMD[]={0x0000,0x00100011,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000};
+//static uint32_t continuousImageDownloadCMD[]={0x0000,0x00100018,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000};
+//static uint32_t continuousImageDownloadCMD[]={0x00000000, 0x10001800, 0x00000000, 0x0000000, 0x0000000, 0x0000000, 0x00000000, 0x0000000 };
+//static uint32_t GET_RBL_STATUS_CMD[]={0x00000000, 0x11001000, 0x00000000, 0x00000000};
 
 /* The Image data should be multiple of 16 . dummy_data is used to send extra bytes 
 so that overall image size should become multiple of 16 */
@@ -92,7 +94,7 @@ void spi_transfer(uint8_t *tx, uint8_t *rx, uint32_t length, spi_config_t config
 		.speed_hz      = config.speed,
 		.delay_usecs   = config.delay,
 		.bits_per_word = config.bits_per_word,
-                .cs_change     = 0, // has no impact on cs toggle between chunks, cs is still active, and cs_off is not available in this kernel version
+//                .cs_change     = 0, // has no impact on cs toggle between chunks, cs is still active, and cs_off is not available in this kernel version
 	};
 
         // reverse bit order
@@ -281,7 +283,7 @@ void spiboot(spi_config_t config)
 
     for (uint8_t i = 0; i < 100; ++i)
     {
-        tx[i] = (uint8_t)0xab;
+        tx[i] = (uint8_t)0x00;
     }
 
     uint8_t rx[100];
@@ -289,7 +291,13 @@ void spiboot(spi_config_t config)
     /* Initiate transfer for Continuous Image Download Command */
     uint32_t size = continuousImageDownloadCMDMsgSize; ///config.bits_per_word; // / 2*(config.length/config.bits_per_word;
 
-    spi_transfer((uint8_t*)continuousImageDownloadCMD, NULL, size, config); 
+//    spi_transfer((uint8_t*)continuousImageDownloadCMD, NULL, size, config); 
+    spi_transfer((uint8_t*)SwitchToApplicationCMD, rx, 16/2, config);
+//    std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+ 
+    spi_transfer((uint8_t*)SwitchToApplicationRESP, rx, 32/2, config);
+//    spi_transfer((uint8_t*)GET_RBL_STATUS_CMD, rx, 16, config);
+//    spi_transfer(tx, rx, size, config);
     std::cout << "transfer download command: " << size << std::endl;
    
     std::cout << "1" << std::endl; 
