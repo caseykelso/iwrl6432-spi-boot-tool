@@ -1,6 +1,5 @@
-//#define CALC32_DUMMY 1
+#define CALC32_DUMMY 1
 //#define SPI_TEST_PATTERN 1
-
 
 #include <stdint.h>
 #include <iostream>
@@ -13,10 +12,6 @@
 #include <functional>
 #include <spi.h>
 #include <zlib.h>
-#ifdef CALC32_DUMMY
-#include "crc32.hpp"
-#include "crc32c/crc32c.h"
-#endif //CALC32_DUMMY
 extern "C" {
 #include "crc.h"
 }
@@ -34,13 +29,9 @@ const uint8_t DUMMY_SIZE = 12;
 uint32_t DUMMY_CRC_VALUE = { 0x28306198 };
 uint8_t DUMMY_CRC_MESSAGE[] = { 0x00, 0x1B, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x15, 0x00, 0x00};
 uint8_t TEST_GET_RBL_STATUS_CMD[] = {0x0, 0x10, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0 };
-#ifdef CALC32_DUMMY
-uint32_t google_crc32_calc(uint8_t data[], uint32_t length)
-{
-        uint32_t result = crc32c::Crc32c(data, length);
-        return result;
-}
+uint8_t TEST_SWITCH_TO_APPLICATION_CMD[] = {0x0, 0x0, 0x0, 0x1A, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0};
 
+#ifdef CALC32_DUMMY
 uint32_t zlib_crc32_calc(uint8_t data[], uint32_t length)
 {
         uint32_t result = crc32(0L, Z_NULL, 0); // null seed
@@ -48,17 +39,11 @@ uint32_t zlib_crc32_calc(uint8_t data[], uint32_t length)
         return result;
 }
 
-uint32_t cpp11_crc32_calc()
-{
-        std::vector<uint8_t> v(std::begin(DUMMY_CRC_MESSAGE), std::end(DUMMY_CRC_MESSAGE));
-        uint32_t result = crc32<IEEE8023_CRC32_POLYNOMIAL>(0xFFFFFFFF, v.begin(), v.end());
-        return result;
-}
-
 uint32_t my_crc32_calc()
 {
     F_CRC_InicializaTabla();
-    uint32_t result = F_CRC_CalculaCheckSum(TEST_GET_RBL_STATUS_CMD, DUMMY_SIZE);
+    uint32_t result = F_CRC_CalculaCheckSum(TEST_SWITCH_TO_APPLICATION_CMD, DUMMY_SIZE);
+    //uint32_t result = F_CRC_CalculaCheckSum(TEST_GET_RBL_STATUS_CMD, DUMMY_SIZE);
     //uint32_t result = F_CRC_CalculaCheckSum(DUMMY_CRC_MESSAGE, DUMMY_SIZE);
     return result;
 }
@@ -98,15 +83,11 @@ void siginthandler(int param)
 int main(void)
 {
 #ifdef CALC32_DUMMY
-   uint32_t google_dummy_crc32 = google_crc32_calc(DUMMY_CRC_MESSAGE, DUMMY_SIZE);
-   uint32_t zlib_dummy_crc32   = zlib_crc32_calc(DUMMY_CRC_MESSAGE, DUMMY_SIZE);
-   uint32_t cpp11_dummy_crc32  = cpp11_crc32_calc();
+   uint32_t zlib_dummy_crc32   = zlib_crc32_calc(TEST_SWITCH_TO_APPLICATION_CMD, DUMMY_SIZE);
    uint32_t my_crc32           = my_crc32_calc();
-   std::cout << "google dummy crc32: " << std::hex << google_dummy_crc32 << std::endl;
    std::cout << "zlib dummy crc32  : " << std::hex << zlib_dummy_crc32 << std::endl;
-   std::cout << "cpp11 dummy crc32 : " << std::hex << cpp11_dummy_crc32 << std::endl;
    std::cout << "my crc32          : " << std::hex << my_crc32 << std::endl;
-   std::cout << "expected crc32: 0x28306198" << std::endl;
+//   std::cout << "expected crc32: 0x28306198" << std::endl;
 #else
 	const std::string gpiod_chip_name("gpiochip0");
         signal(SIGINT, siginthandler);
