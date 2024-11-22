@@ -295,13 +295,13 @@ void spiboot(spi_config_t config)
 #endif
 
 //    spi_transfer((uint8_t*)continuousImageDownloadCMD, NULL, size, config); 
-#define CONTINUOUS_DOWNLOAD 1
+//#define CONTINUOUS_DOWNLOAD 1
 #if CONTINUOUS_DOWNLOAD
     spi_transfer((uint8_t*)continuousImageDownloadCMD, rx, 32, config);
     std::cout << "waiting" << std::endl;
     block_until_spi_ready(config);
 #endif
-//#define APPLICATION_SWITCH 1
+#define APPLICATION_SWITCH 1
 #if APPLICATION_SWITCH
     spi_transfer((uint8_t*)SwitchToApplicationCMD, rx, 16, config);
     std::cout << "waiting" << std::endl;
