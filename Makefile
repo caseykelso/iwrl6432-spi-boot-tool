@@ -42,14 +42,35 @@ HEADERS.DIR=$(BASE.DIR)/ti_headers
 AMBA.TOOLCHAIN.ARCHIVE=linaro-aarch64-2020.09-gcc10.2-linux5.4-x86_64.tar.xz
 AMBA.TOOLCHAIN.URL=https://buildroot-sources.s3.amazonaws.com/$(AMBA.TOOLCHAIN.ARCHIVE)
 
+CRC32.PREFIX=crc32-11
+CRC32.DIR=$(DOWNLOADS.DIR)/$(CRC32.PREFIX)
+CRC32.BUILD=$(DOWNLOADS.DIR)/build.$(CRC32.PREFIX)
+
+CRC32C.DIR=$(DOWNLOADS.DIR)/crc32c
+CRC32C.BUILD=$(DOWNLOADS.DIR)/build.crc32c
+
 toolchain.waffle: submodule
 	mkdir -p $(TOOLCHAIN.DIR)
 	cd $(TOOLCHAIN.DIR) && wget $(AMBA.TOOLCHAIN.URL)
 
-ci: toolchain.waffle firmware firmware.convert.appimage.to.hex build.waffle build.x86
+ci: toolchain.waffle firmware firmware.convert.appimage.to.hex build.waffle crc32 build.x86
 
 run: .FORCE
 	$(BUILD.DIR)/xwrflasher
+
+crc32c: .FORCE
+	rm -rf $(CRC32C.DIR)
+	rm -rf $(CRC32C.BUILD)
+	mkdir -p $(CRC32C.BUILD)
+	cd $(DOWNLOADS.DIR) && git clone --recurse-submodules -j8 git@github.com:google/crc32c.git
+	cd $(CRC32C.BUILD) && $(CMAKE.BIN) -DCMAKE_PREFIX_PATH=$(INSTALLED.HOST.DIR) -DCMAKE_INSTALL_PREFIX=$(INSTALLED.HOST.DIR) $(CRC32C.DIR) && make install
+
+crc32: .FORCE
+	rm -rf $(CRC32.DIR)
+	rm -rf $(CRC32.BUILD)
+	mkdir -p $(CRC32.BUILD)
+	cd $(DOWNLOADS.DIR) && git clone git@github.com:caseykelso/crc32-11.git -b dev
+	cd $(CRC32.BUILD) && $(CMAKE.BIN) -DCMAKE_PREFIX_PATH=$(INSTALLED.HOST.DIR) -DCMAKE_INSTALL_PREFIX=$(INSTALLED.HOST.DIR) $(CRC32.DIR) && make install
 
 gpiod: .FORCE
 	rm -rf $(GPIOD.DIR)
@@ -65,7 +86,7 @@ ti.headers: .FORCE
 
 build.x86: .FORCE
 	rm -rf $(BUILD.DIR) && mkdir -p $(BUILD.DIR)
-	cd $(BUILD.DIR) && $(CMAKE.BIN) -DCMAKE_PREFIX_PATH=$(INSTALLED.HOST.DIR) $(SOURCE.DIR) && make
+	cd $(BUILD.DIR) && $(CMAKE.BIN) -DCMAKE_PREFIX_PATH=$(INSTALLED.HOST.DIR) $(SOURCE.DIR) && make VERBOSE=1
 
 build.rpi4: .FORCE
 	rm -rf $(BUILD.DIR) && mkdir -p $(BUILD.DIR)

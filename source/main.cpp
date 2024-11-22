@@ -7,7 +7,9 @@
 #include <gpio.h>
 #include <functional>
 #include <spi.h>
-#include <zlib.h>
+//#include <zlib.h>
+//#include "crc32.hpp"
+#include "crc32c/crc32c.h"
 
 #define CALC32_DUMMY 1
 //#define SPI_TEST_PATTERN 1
@@ -25,8 +27,8 @@ uint8_t DUMMY_CRC_MESSAGE[] = { 0x00, 0x1B, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 
 
 uint32_t crc32_calc(uint8_t data[], uint32_t length)
 {
-	uint32_t result = crc32(0L, Z_NULL, 0); // null seed
-	result = crc32(result, (Bytef*)data, length);
+        std::cout << length << std::endl;
+        uint32_t result = crc32c::Crc32c(data, length);
         return result;
 }
 
