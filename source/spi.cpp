@@ -24,7 +24,6 @@
 
 /* Size of Continuous Image Download Command */
 #define continuousImageDownloadCMDMsgSize   (32U)
-#define APP_CRC_CHANNEL                     (CRC_CHANNEL_1)
 
 /* Data Size for calculation of CRC of Continuous Image Download Command */
 #define APP_USER_DATA_SIZE                  ((uint32_t) 28U)
@@ -58,6 +57,10 @@ uint32_t* dummy_data = NULL;
 uint32_t continuousImageDownloadRESP[8] = {0};
 uint32_t SwitchToApplicationCMD[] = {0x9DFAC3F2,0x0000001A,0x0000,0x0000}; // SWITCH_TO_APPLICATION_CMD
 uint32_t SwitchToApplicationRESP[] = {0x0000,0x0000,0x0000,0x0000}; // SWITCH_TO_APPLICATION_RESP
+uint32_t GET_RBL_STATUS_CMD[] = {0x0, 00100000, 0, 0};
+
+uint32_t DUMMY_CRC_VALUE = { 0x28306198 };
+uint32_t DUMMY_CRC_MESSAGE[] = { 0x001B0000 0x00000000 0x00150000 0xB5061579 0xBB975579 0xBB975579 0xBB975579 };
 
 /* Receive buffer after sending Footer commands*/
 uint32_t gMcspiRxBuffer1[8]={0};
@@ -291,13 +294,19 @@ void spiboot(spi_config_t config)
     /* Initiate transfer for Continuous Image Download Command */
     uint32_t size = continuousImageDownloadCMDMsgSize; ///config.bits_per_word; // / 2*(config.length/config.bits_per_word;
 
+//    spi_transfer((uint8_t*)GET_RBL_STATUS_CMD, NULL, 16, config);
 //    spi_transfer((uint8_t*)continuousImageDownloadCMD, NULL, size, config); 
-    spi_transfer((uint8_t*)SwitchToApplicationCMD, rx, 16/2, config);
+    spi_transfer((uint8_t*)SwitchToApplicationCMD, rx, 16, config);
+    std::cout << "waiting" << std::endl;
+    block_until_spi_ready(config);
+    spi_transfer((uint8_t*)SwitchToApplicationRESP, rx, 32, config);
+ 
 //    std::this_thread::sleep_for(std::chrono::milliseconds(1000));
  
-    spi_transfer((uint8_t*)SwitchToApplicationRESP, rx, 32/2, config);
+//    spi_transfer((uint8_t*)SwitchToApplicationRESP, rx, 32/2, config);
 //    spi_transfer((uint8_t*)GET_RBL_STATUS_CMD, rx, 16, config);
 //    spi_transfer(tx, rx, size, config);
+#if 0
     std::cout << "transfer download command: " << size << std::endl;
    
     std::cout << "1" << std::endl; 
@@ -305,7 +314,7 @@ void spiboot(spi_config_t config)
  
     block_until_spi_ready(config);
     std::cout << "2" << std::endl; 
-
+#endif
 #if 0
     spi_transfer((uint8_t*)GET_RBL_STATUS_CMD , NULL, size, config); 
     std::cout << "transfer download command: " << size << std::endl;
