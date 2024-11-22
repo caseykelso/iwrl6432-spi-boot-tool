@@ -1,4 +1,4 @@
-#define CALC32_DUMMY 1
+//#define CALC32_DUMMY 1
 //#define SPI_TEST_PATTERN 1
 
 #include <stdint.h>
@@ -25,11 +25,11 @@ const int     IWRL6432_RESET_ACTIVE    = 0;
 const int     IWRL6432_RESET_INACTIVE  = 1;
 spi_config_t  spi_config               = {};
 
-const uint8_t DUMMY_SIZE = 12;
+const uint8_t DUMMY_SIZE = 16;
 uint32_t DUMMY_CRC_VALUE = { 0x28306198 };
 uint8_t DUMMY_CRC_MESSAGE[] = { 0x00, 0x1B, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x15, 0x00, 0x00};
 uint8_t TEST_GET_RBL_STATUS_CMD[] = {0x0, 0x10, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0 };
-uint8_t TEST_SWITCH_TO_APPLICATION_CMD[] = {0x0, 0x0, 0x0, 0x1A, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0};
+uint8_t TEST_SWITCH_TO_APPLICATION_CMD[] = {0x0, 0x0, 0x0, 0x0, 0x0, 0x1A, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0};
 
 #ifdef CALC32_DUMMY
 uint32_t zlib_crc32_calc(uint8_t data[], uint32_t length)
@@ -95,7 +95,7 @@ int main(void)
 	int          exit_code     = 0;
 	spi_config.mode            = 0;
 	spi_config.speed           = 500000;
-	spi_config.bits_per_word   = 16;
+	spi_config.bits_per_word   = 8;
 	spi_config.device          = "/dev/spidev0.0"; // make runtime configurable
 	spi_config.file_descriptor = 0;
 	spi_config.delay           = 10; //10 microseconds

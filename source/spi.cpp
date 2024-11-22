@@ -43,9 +43,8 @@ uint32_t crcValue=0;
 DMA for continuous image download. It has the following format
 <MSG_CRC><SPI_CMD_TYPE><LONG_MSG_SIZE><RESERVED><SHORT_MSG><LONG_MSG>*/
 
-static uint32_t continuousImageDownloadCMD[]={0x0000,0x00100018,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000};
+static uint32_t continuousImageDownloadCMD[]={0x00000000, 0x00100018, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0};
 //static uint32_t continuousImageDownloadCMD[]={0x0000,0x00100018,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000};
-//static uint32_t continuousImageDownloadCMD[]={0x00000000, 0x10001800, 0x00000000, 0x0000000, 0x0000000, 0x0000000, 0x00000000, 0x0000000 };
 static uint32_t GET_RBL_STATUS_CMD[]={0xd52302a4, 0x00100000, 0x00000000, 0x00000000};
 /* The Image data should be multiple of 16 . dummy_data is used to send extra bytes 
 so that overall image size should become multiple of 16 */
@@ -205,11 +204,11 @@ bool spi_init(spi_config_t &spi_config)
 /* CRC Calculation for Continuous Image Download Command */
 void calculatecrc32()
 {
-        continuousImageDownloadCMD[4]=Size;
-//        continuousImageDownloadCMD[5]=((Size&&0x00FF00) >> 2);
-//        continuousImageDownloadCMD[6]=((Size&&0xFF0000) >> 4);
-	crcValue = crc32(0L, Z_NULL, 0);
-	crcValue = crc32(crcValue, (Bytef*)continuousImageDownloadCMD, APP_CRC_PATTERN_CNT+1);
+       uint32_t padded_data=16-(Size%16);
+       continuousImageDownloadCMD[4]=Size+padded_data;
+       continuousImageDownloadCMD[5]=Size;
+       crcValue = crc32(0L, Z_NULL, 0);
+       crcValue = crc32(crcValue, (Bytef*)continuousImageDownloadCMD, APP_CRC_PATTERN_CNT+1);
 }
 
 bool is_spi_busy(const spi_config_t config)
@@ -263,7 +262,7 @@ void spiboot(spi_config_t config)
     /* calculation of CRC for Continuous Image Download Command */
     calculatecrc32();
     
-//    continuousImageDownloadCMD[0]=crcValue;
+    continuousImageDownloadCMD[0]=crcValue;
 
     dummy_data = (uint32_t*)malloc(sizeof(uint32_t) * padding);
 
@@ -296,12 +295,13 @@ void spiboot(spi_config_t config)
 #endif
 
 //    spi_transfer((uint8_t*)continuousImageDownloadCMD, NULL, size, config); 
+#define CONTINUOUS_DOWNLOAD 1
 #if CONTINUOUS_DOWNLOAD
     spi_transfer((uint8_t*)continuousImageDownloadCMD, rx, 32, config);
     std::cout << "waiting" << std::endl;
     block_until_spi_ready(config);
 #endif
-#define APPLICATION_SWITCH 1
+//#define APPLICATION_SWITCH 1
 #if APPLICATION_SWITCH
     spi_transfer((uint8_t*)SwitchToApplicationCMD, rx, 16, config);
     std::cout << "waiting" << std::endl;
