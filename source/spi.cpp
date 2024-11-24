@@ -18,6 +18,8 @@
 #include <memory>
 #include <thread>
 #include <chrono>
+#include "crc.h"
+//#include <bit>
 
 /* Size of Continuous Image Download Command */
 #define continuousImageDownloadCMDMsgSize   (32U)
@@ -42,7 +44,7 @@ DMA for continuous image download. It has the following format
 
 static uint32_t continuousImageDownloadCMD[]={0x00000000, 0x00100018, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0};
 //static uint32_t continuousImageDownloadCMD[]={0x0000,0x00100018,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000};
-static uint32_t GET_RBL_STATUS_CMD[]={0xd52302a4, 0x00100000, 0x00000000, 0x00000000};
+static uint32_t GET_RBL_STATUS_CMD[]={0xd52302a4, 0x00100011, 0x00000000, 0x00000000};
 /* The Image data should be multiple of 16 . dummy_data is used to send extra bytes 
 so that overall image size should become multiple of 16 */
 
@@ -58,6 +60,10 @@ uint32_t gMcspiRxBuffer1[8]={0};
 uint32_t gMcspiRxBuffer2[4]={0};
 uint32_t gMcspiRxBuffer3[4]={0};
 
+uint32_t reverse_endian_32(uint32_t number) 
+{
+  return (((number & 0xFF) << 24) | ((number & 0xFF00) << 8) | ((number & 0xFF0000) >> 8) | (number >> 24));
+}
 
 uint8_t reverse_bits(uint8_t n) 
 {
@@ -288,6 +294,14 @@ void spiboot(spi_config_t config)
     uint32_t size = continuousImageDownloadCMDMsgSize; ///config.bits_per_word; // / 2*(config.length/config.bits_per_word;
 //#define GET_STATUS 1
 #if GET_STATUS
+    std::vector<uint8_t> v(std::begin(GET_RBL_STATUS_CMD), std::end(GET_RBL_STATUS_CMD));
+    for (uint8_t i = 0; i < 5; ++i)
+    {
+        v.push_back(0x0);
+    }
+    uint32_t crc = calculateCRC32(v, 0x04C11DB7, 0xFFFFFFFF, 0xFFFFFFFF, true);
+
+    GET_RBL_STATUS_CMD[0] = reverse_endian_32(crc);
     spi_transfer((uint8_t*)GET_RBL_STATUS_CMD, NULL, 16, config);
     std::cout << "waiting" << std::endl;
     block_until_spi_ready(config);

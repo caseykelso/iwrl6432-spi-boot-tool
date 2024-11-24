@@ -1,4 +1,4 @@
-#define CALC32_DUMMY 1
+//#define CALC32_DUMMY 1
 //#define SPI_TEST_PATTERN 1
 
 #include <stdint.h>
