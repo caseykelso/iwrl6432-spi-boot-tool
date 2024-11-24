@@ -2,6 +2,7 @@
 #include <stdint.h>
 #include <cstring>
 #include "crc.h"
+#include <iostream>
 
 // Function to reverse bits in an integer (similar to the Python version)
 uint32_t reverseBits(uint32_t value, uint32_t bitCount) 

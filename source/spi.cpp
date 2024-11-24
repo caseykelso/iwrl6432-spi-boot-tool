@@ -19,6 +19,8 @@
 #include <thread>
 #include <chrono>
 #include "crc.h"
+#include <cstring>
+
 //#include <bit>
 
 /* Size of Continuous Image Download Command */
@@ -51,7 +53,7 @@ so that overall image size should become multiple of 16 */
 const uint32_t SPIDEV_MAX_BLOCK_SIZE = 4096;
 uint32_t* dummy_data = NULL;
 uint32_t continuousImageDownloadRESP[8] = {0};
-uint32_t SwitchToApplicationCMD[] = {0x9DFAC3F2,0x0000001A,0x0000,0x0000, 0x00, 0x0, 0x0}; // SWITCH_TO_APPLICATION_CMD
+uint32_t SwitchToApplicationCMD[] = {0x00000000, 0x001A00000, 0x00000000, 0x00000000}; // SWITCH_TO_APPLICATION_CMD
 uint32_t SwitchToApplicationRESP[] = {0x0000,0x0000,0x0000,0x0000}; // SWITCH_TO_APPLICATION_RESP
 //uint32_t GET_RBL_STATUS_CMD[] = {0x0, 00100000, 0, 0};
 
@@ -60,9 +62,22 @@ uint32_t gMcspiRxBuffer1[8]={0};
 uint32_t gMcspiRxBuffer2[4]={0};
 uint32_t gMcspiRxBuffer3[4]={0};
 
-uint32_t reverse_endian_32(uint32_t number) 
+uint32_t arrange_bytes(uint32_t number) 
 {
-  return (((number & 0xFF) << 24) | ((number & 0xFF00) << 8) | ((number & 0xFF0000) >> 8) | (number >> 24));
+    uint32_t result = 0x0;
+//    result = (number & 0x000000FF) << 8;
+    result = (((number & 0x000000FF) << 8) | ((number & (0x0000FF00)) >> 8) | ((number & (0x00FF0000)) << 8) | ((number & (0xFF000000)) >> 8));
+    std::cout << "before: " << std::hex << number << std::endl;
+    std::cout << "after: " << std::hex << result << std::endl;
+    return result;
+}
+
+
+uint32_t arrange_crc32(uint32_t number) 
+{
+    uint32_t result = 0x0;
+    result = ((number << 16));// | (number << 16));
+    return result;
 }
 
 uint8_t reverse_bits(uint8_t n) 
@@ -301,7 +316,7 @@ void spiboot(spi_config_t config)
     }
     uint32_t crc = calculateCRC32(v, 0x04C11DB7, 0xFFFFFFFF, 0xFFFFFFFF, true);
 
-    GET_RBL_STATUS_CMD[0] = reverse_endian_32(crc);
+    GET_RBL_STATUS_CMD[0] = arrange_bytes(crc);
     spi_transfer((uint8_t*)GET_RBL_STATUS_CMD, NULL, 16, config);
     std::cout << "waiting" << std::endl;
     block_until_spi_ready(config);
@@ -316,6 +331,59 @@ void spiboot(spi_config_t config)
 #endif
 #define APPLICATION_SWITCH 1
 #if APPLICATION_SWITCH
+    //std::vector<uint8_t> v(std::begin((uint8_t[])SwitchToApplicationCMD), std::end(SwitchToApplicationCMD));
+
+    std::vector<uint32_t> v32(std::begin(SwitchToApplicationCMD), std::end(SwitchToApplicationCMD));
+    std::vector<uint8_t> v8;
+    uint8_t element_count = 0;
+
+    for (auto &element : v32)
+    {
+        std::cout << "element_count: " << unsigned(element_count) << std::endl;
+        if (element_count >= 1) // slip the crc field
+        { 
+            std::cout << "not flipped: " << std::hex << element << std::endl;
+            uint32_t flipped = arrange_bytes(element);
+            std::cout << "flipped: " << std::hex << flipped << std::endl; 
+            uint8_t flipped_bytes[4];
+            std::memcpy((void*)flipped_bytes, (void*)flipped, 4);
+
+            for (uint8_t i = 0; i < 4; ++i)
+            {
+                v8.push_back(flipped_bytes[0]);    
+            }
+        }
+        ++element_count;
+    }
+
+#if 0
+    uint8_t *num = (uint8_t*)SwitchToApplicationCMD;
+    for (uint8_t i = 0; i < 12; ++i)
+    {
+        if (i >= 4)
+        {
+            v8.push_back(*num);
+        }
+        num++;
+    }
+#endif
+#if 0
+    for (uint8_t i = 0; i < 5; ++i)
+    {
+        v.push_back(0x0);
+    }
+#endif
+
+    std::cout << "vector: ";
+    for (auto & element : v8)
+    {
+        std::cout << std::hex << unsigned(element);
+    }
+    std::cout << std::endl;
+    
+    uint32_t crc = calculateCRC32(v8, 0x04C11DB7, 0xFFFFFFFF, 0xFFFFFFFF, true);
+
+    SwitchToApplicationCMD[0] = arrange_bytes(crc);
     spi_transfer((uint8_t*)SwitchToApplicationCMD, rx, 16, config);
     std::cout << "waiting" << std::endl;
     block_until_spi_ready(config);
