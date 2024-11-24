@@ -3,15 +3,16 @@
 
 #include <stdint.h>
 #include <iostream>
+#include <iomanip>
 #include <stdexcept>
 #include <thread>
+#include <cstring>
 #include <chrono>
 #include <vector>
 #include <signal.h>
 #include <gpio.h>
 #include <functional>
 #include <spi.h>
-#include <zlib.h>
 extern "C" {
 #include "crc.h"
 }
@@ -29,36 +30,63 @@ const uint8_t DUMMY_SIZE = 24;
 uint32_t DUMMY_CRC_VALUE = { 0x28306198 };
 //uint8_t DUMMY_CRC_MESSAGE[] = { 0x00, 0x1B, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x15, 0x00, 0x00};
 //uint8_t DUMMY_CRC_MESSAGE[] = { 0x00, 0x1A, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
-uint32_t DUMMY_CRC_MESSAGE[] = {0x9DFAC3F2,0x0000001A,0x0000,0x0000, 0x00, 0x0, 0x0};
+//uint32_t DUMMY_CRC_MESSAGE[] = {0x9DFAC3F2,0x0000001A,0x0000,0x0000, 0x00, 0x0, 0x0};
+uint8_t DUMMY_CRC_MESSAGE[] =  {0x00, 0x00, 0x00, 0x1A, 0x00, 0x00, 0x00, 0x00, 0x00};
+
 uint8_t DUMMY_CRC_MESSAGE_REVERSED[DUMMY_SIZE];
 uint8_t TEST_GET_RBL_STATUS_CMD[] = {0x0, 0x10, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0 };
 uint8_t TEST_SWITCH_TO_APPLICATION_CMD[] = {0x0, 0x0, 0x0, 0x0, 0x0, 0x1A, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0};
 
-#ifdef CALC32_DUMMY
-uint32_t zlib_crc32_calc(uint8_t data[], uint32_t length)
-{
-        uint32_t result = crc32(0L, Z_NULL, 0); // null seed
-        result = crc32(result, (Bytef*)data, length);
-        return result;
-}
-
-uint32_t my_crc32_calc()
-{
-    F_CRC_InicializaTabla();
-    uint32_t result = F_CRC_CalculaCheckSum((uint8_t*)DUMMY_CRC_MESSAGE, DUMMY_SIZE);
-    //uint32_t result = F_CRC_CalculaCheckSum(TEST_GET_RBL_STATUS_CMD, DUMMY_SIZE);
-    //uint32_t result = F_CRC_CalculaCheckSum(DUMMY_CRC_MESSAGE, DUMMY_SIZE);
+// Function to reverse bits in an integer (similar to the Python version)
+uint32_t reverseBits(uint32_t value, uint32_t bitCount) {
+    uint32_t result = 0;
+    for (uint32_t i = 0; i < bitCount; ++i) {
+        result = (result << 1) | (value & 1);
+        value >>= 1;
+    }
     return result;
 }
 
-uint32_t my_crc32_reversed_calc()
-{
-    F_CRC_InicializaTabla();
-    uint32_t result = F_CRC_CalculaCheckSum(DUMMY_CRC_MESSAGE_REVERSED, DUMMY_SIZE);
-    return result;
-}
 
-#endif //CALC32_DUMMY
+
+// Function to calculate CRC32 in the same manner as the Python implementation
+uint32_t calculateCRC32(const std::vector<uint8_t>& payload, uint32_t poly = 0x04C11DB7,
+                        uint32_t initCRC = 0xFFFFFFFF, uint32_t xorOut = 0xFFFFFFFF, bool reverse = false) {
+    uint32_t crc = initCRC;
+
+    // Process the payload in 4-byte chunks
+    for (size_t i = 0; i < payload.size(); i += 4) {
+        // Extract a 4-byte chunk
+        uint32_t chunk = 0;
+        std::vector<uint8_t> chunkBytes(4, 0);
+        std::memcpy(&chunkBytes[0], &payload[i], std::min<size_t>(4, payload.size() - i));
+        chunk = (chunkBytes[0] << 24) | (chunkBytes[1] << 16) | (chunkBytes[2] << 8) | chunkBytes[3];
+
+        if (reverse) {
+            chunk = reverseBits(chunk, 32); // Reverse bits if needed
+        }
+
+        // XOR the chunk into the CRC register
+        crc ^= chunk;
+
+        // Perform 32 iterations of the CRC algorithm for each bit in the chunk
+        for (int j = 0; j < 32; ++j) {
+            if (crc & 0x80000000) {
+                crc = ((crc << 1) & 0xFFFFFFFF) ^ poly;
+            } else {
+                crc = (crc << 1) & 0xFFFFFFFF;
+            }
+        }
+    }
+
+    // Reverse bits of the CRC value if needed
+    if (reverse) {
+        crc = reverseBits(crc, 32);
+    }
+
+    // Apply the XOR-out value
+    return crc ^ xorOut;
+}
 
 //callback to get spi busy gpio state, this is important to decouple the spi and gpio implementations
 bool gpio_spi_busy()
@@ -94,19 +122,9 @@ void siginthandler(int param)
 int main(void)
 {
 #ifdef CALC32_DUMMY
-   uint32_t zlib_dummy_crc32   = zlib_crc32_calc((uint8_t*)DUMMY_CRC_MESSAGE, DUMMY_SIZE);
-   uint32_t my_crc32           = my_crc32_calc();
-   uint32_t my_crc32_reversed  = my_crc32_reversed_calc();
-
-   for (uint8_t i = 0; i < DUMMY_SIZE; ++i)
-   {
-       DUMMY_CRC_MESSAGE_REVERSED[i] = reverse_bits(DUMMY_CRC_MESSAGE[i]);
-   }
-   std::cout << "zlib dummy crc32  : " << std::hex << zlib_dummy_crc32 << std::endl;
-   std::cout << "my crc32          : " << std::hex << my_crc32 << std::endl;
-   std::cout << "my crc32 reversed : " << std::hex << my_crc32_reversed << std::endl;
-
-//   std::cout << "expected crc32: 0x28306198" << std::endl;
+   std::vector<uint8_t> v(std::begin(DUMMY_CRC_MESSAGE), std::end(DUMMY_CRC_MESSAGE));
+   uint32_t crc = calculateCRC32(v, 0x04C11DB7, 0xFFFFFFFF, 0xFFFFFFFF, true);
+   std::cout << "crc32: " << std::hex << crc << std::endl;
 #else
 	const std::string gpiod_chip_name("gpiochip0");
         signal(SIGINT, siginthandler);

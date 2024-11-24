@@ -18,7 +18,6 @@
 #include <memory>
 #include <thread>
 #include <chrono>
-#include <zlib.h>
 
 //#define SPI_REVERSE_BIT_ORDER 1
 
@@ -204,11 +203,13 @@ bool spi_init(spi_config_t &spi_config)
 /* CRC Calculation for Continuous Image Download Command */
 void calculatecrc32()
 {
+#if  0
        uint32_t padded_data=16-(Size%16);
        continuousImageDownloadCMD[4]=Size+padded_data;
        continuousImageDownloadCMD[5]=Size;
        crcValue = crc32(0L, Z_NULL, 0);
        crcValue = crc32(crcValue, (Bytef*)continuousImageDownloadCMD, APP_CRC_PATTERN_CNT+1);
+#endif
 }
 
 bool is_spi_busy(const spi_config_t config)
