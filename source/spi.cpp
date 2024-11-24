@@ -19,8 +19,6 @@
 #include <thread>
 #include <chrono>
 
-//#define SPI_REVERSE_BIT_ORDER 1
-
 /* Size of Continuous Image Download Command */
 #define continuousImageDownloadCMDMsgSize   (32U)
 /* Data Size for calculation of CRC of Continuous Image Download Command */
