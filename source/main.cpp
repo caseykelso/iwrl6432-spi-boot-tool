@@ -1,4 +1,4 @@
-//#define CALC32_DUMMY 1
+#define CALC32_DUMMY 1
 //#define SPI_TEST_PATTERN 1
 
 #include <stdint.h>
@@ -25,9 +25,12 @@ const int     IWRL6432_RESET_ACTIVE    = 0;
 const int     IWRL6432_RESET_INACTIVE  = 1;
 spi_config_t  spi_config               = {};
 
-const uint8_t DUMMY_SIZE = 16;
+const uint8_t DUMMY_SIZE = 24;
 uint32_t DUMMY_CRC_VALUE = { 0x28306198 };
-uint8_t DUMMY_CRC_MESSAGE[] = { 0x00, 0x1B, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x15, 0x00, 0x00};
+//uint8_t DUMMY_CRC_MESSAGE[] = { 0x00, 0x1B, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x15, 0x00, 0x00};
+//uint8_t DUMMY_CRC_MESSAGE[] = { 0x00, 0x1A, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+uint32_t DUMMY_CRC_MESSAGE[] = {0x9DFAC3F2,0x0000001A,0x0000,0x0000, 0x00, 0x0, 0x0};
+uint8_t DUMMY_CRC_MESSAGE_REVERSED[DUMMY_SIZE];
 uint8_t TEST_GET_RBL_STATUS_CMD[] = {0x0, 0x10, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0 };
 uint8_t TEST_SWITCH_TO_APPLICATION_CMD[] = {0x0, 0x0, 0x0, 0x0, 0x0, 0x1A, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0};
 
@@ -42,11 +45,19 @@ uint32_t zlib_crc32_calc(uint8_t data[], uint32_t length)
 uint32_t my_crc32_calc()
 {
     F_CRC_InicializaTabla();
-    uint32_t result = F_CRC_CalculaCheckSum(TEST_SWITCH_TO_APPLICATION_CMD, DUMMY_SIZE);
+    uint32_t result = F_CRC_CalculaCheckSum((uint8_t*)DUMMY_CRC_MESSAGE, DUMMY_SIZE);
     //uint32_t result = F_CRC_CalculaCheckSum(TEST_GET_RBL_STATUS_CMD, DUMMY_SIZE);
     //uint32_t result = F_CRC_CalculaCheckSum(DUMMY_CRC_MESSAGE, DUMMY_SIZE);
     return result;
 }
+
+uint32_t my_crc32_reversed_calc()
+{
+    F_CRC_InicializaTabla();
+    uint32_t result = F_CRC_CalculaCheckSum(DUMMY_CRC_MESSAGE_REVERSED, DUMMY_SIZE);
+    return result;
+}
+
 #endif //CALC32_DUMMY
 
 //callback to get spi busy gpio state, this is important to decouple the spi and gpio implementations
@@ -83,10 +94,18 @@ void siginthandler(int param)
 int main(void)
 {
 #ifdef CALC32_DUMMY
-   uint32_t zlib_dummy_crc32   = zlib_crc32_calc(TEST_SWITCH_TO_APPLICATION_CMD, DUMMY_SIZE);
+   uint32_t zlib_dummy_crc32   = zlib_crc32_calc((uint8_t*)DUMMY_CRC_MESSAGE, DUMMY_SIZE);
    uint32_t my_crc32           = my_crc32_calc();
+   uint32_t my_crc32_reversed  = my_crc32_reversed_calc();
+
+   for (uint8_t i = 0; i < DUMMY_SIZE; ++i)
+   {
+       DUMMY_CRC_MESSAGE_REVERSED[i] = reverse_bits(DUMMY_CRC_MESSAGE[i]);
+   }
    std::cout << "zlib dummy crc32  : " << std::hex << zlib_dummy_crc32 << std::endl;
    std::cout << "my crc32          : " << std::hex << my_crc32 << std::endl;
+   std::cout << "my crc32 reversed : " << std::hex << my_crc32_reversed << std::endl;
+
 //   std::cout << "expected crc32: 0x28306198" << std::endl;
 #else
 	const std::string gpiod_chip_name("gpiochip0");

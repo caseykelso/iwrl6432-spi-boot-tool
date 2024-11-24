@@ -52,7 +52,7 @@ so that overall image size should become multiple of 16 */
 const uint32_t SPIDEV_MAX_BLOCK_SIZE = 4096;
 uint32_t* dummy_data = NULL;
 uint32_t continuousImageDownloadRESP[8] = {0};
-uint32_t SwitchToApplicationCMD[] = {0x9DFAC3F2,0x0000001A,0x0000,0x0000}; // SWITCH_TO_APPLICATION_CMD
+uint32_t SwitchToApplicationCMD[] = {0x9DFAC3F2,0x0000001A,0x0000,0x0000, 0x00, 0x0, 0x0}; // SWITCH_TO_APPLICATION_CMD
 uint32_t SwitchToApplicationRESP[] = {0x0000,0x0000,0x0000,0x0000}; // SWITCH_TO_APPLICATION_RESP
 //uint32_t GET_RBL_STATUS_CMD[] = {0x0, 00100000, 0, 0};
 

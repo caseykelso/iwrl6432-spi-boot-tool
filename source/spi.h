@@ -17,5 +17,4 @@ bool spi_init(spi_config_t &spi_config);
 void spi_close(spi_config_t &config);
 void spiboot(spi_config_t config);
 void spi_transfer(uint8_t *tx, uint8_t *rx, uint32_t length, spi_config_t config);
-
-
+uint8_t reverse_bits(uint8_t n);
