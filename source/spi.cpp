@@ -308,6 +308,8 @@ void spiboot(spi_config_t config)
     spi_transfer((uint8_t*)CONTINUOUS_IMAGE_DOWNLOAD_CMD_COPY, NULL, 32, config);
     std::cout << "waiting" << std::endl;
     block_until_spi_ready(config);
+    spi_transfer((uint8_t*)dummy_data, NULL, 32, config);
+    block_until_spi_ready(config);
 #endif
 
 #define APPLICATION_SWITCH 0
