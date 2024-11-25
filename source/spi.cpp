@@ -292,8 +292,8 @@ void spiboot(spi_config_t config)
 
     // reverse the MSB/LSB on each 16-bit word on the SPI_CMD_TYPE and the LONG_MSG_SIZE members
     CONTINUOUS_IMAGE_DOWNLOAD_CMD_COPY[1] = double_reversal(CONTINUOUS_IMAGE_DOWNLOAD_CMD_COPY[1]);
-    CONTINUOUS_IMAGE_DOWNLOAD_CMD_COPY[4] = double_reversal(Size); // SPI_DOWNLOAD_SIZE_IN_BYTES = META_IMAGE_SIZE + padding for 16 byte alignment
-    CONTINUOUS_IMAGE_DOWNLOAD_CMD_COPY[5] = double_reversal(Size); // FIRMWARE_SIZE without padding
+    CONTINUOUS_IMAGE_DOWNLOAD_CMD_COPY[4] = reverse_16bits(double_reversal(Size)); // SPI_DOWNLOAD_SIZE_IN_BYTES = META_IMAGE_SIZE + padding for 16 byte alignment
+    CONTINUOUS_IMAGE_DOWNLOAD_CMD_COPY[5] = reverse_16bits(double_reversal(Size)); // FIRMWARE_SIZE without padding
 
     // pack the message into a vector
     std::vector<uint32_t> v32_DOWNLOAD(std::begin(CONTINUOUS_IMAGE_DOWNLOAD_CMD_COPY), std::end(CONTINUOUS_IMAGE_DOWNLOAD_CMD_COPY));
@@ -301,11 +301,12 @@ void spiboot(spi_config_t config)
     // calculate the crc32 for the message
     crc = calculate_crc32(v32_DOWNLOAD, 0x04C11DB7, 0xFFFFFFFF, 0xFFFFFFFF, true);
 
+    std::cout  << "crc: " << std::hex << crc << std::endl;
     CONTINUOUS_IMAGE_DOWNLOAD_CMD_COPY[0] = double_reversal(crc);
 
-    CONTINUOUS_IMAGE_DOWNLOAD_CMD_COPY[1] = reverse_16bits(CONTINUOUS_IMAGE_DOWNLOAD_CMD_COPY[1]);
-    CONTINUOUS_IMAGE_DOWNLOAD_CMD_COPY[4] = reverse_16bits(double_reversal(Size));; //reverse_16bits(8192); // SPI_DOWNLOAD_SIZE_IN_BYTES = META_IMAGE_SIZE + padding for 16 byte alignment
-    CONTINUOUS_IMAGE_DOWNLOAD_CMD_COPY[5] = reverse_16bits(double_reversal(Size)); // FIRMWARE_SIZE without padding
+    CONTINUOUS_IMAGE_DOWNLOAD_CMD_COPY[1] = double_reversal(CONTINUOUS_IMAGE_DOWNLOAD_CMD_COPY[1]);
+    CONTINUOUS_IMAGE_DOWNLOAD_CMD_COPY[4] = (double_reversal(Size)); //reverse_16bits(8192); // SPI_DOWNLOAD_SIZE_IN_BYTES = META_IMAGE_SIZE + padding for 16 byte alignment
+    CONTINUOUS_IMAGE_DOWNLOAD_CMD_COPY[5] = (double_reversal(Size)); // FIRMWARE_SIZE without padding
     std::cout << "CONTINUOUS_IMAGE_DOWNLOAD_CMD_COPY: " << std::hex << Size << std::endl;
     spi_transfer((uint8_t*)CONTINUOUS_IMAGE_DOWNLOAD_CMD_COPY, NULL, 32, config);
     std::cout << "waiting" << std::endl;

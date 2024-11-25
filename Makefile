@@ -26,7 +26,8 @@ BUILD.DIR=$(BASE.DIR)/build
 GPIO.BIN=$(INSTALLED.HOST.DIR)/bin/gpio-ftdi
 SPI.BIN=$(INSTALLED.HOST.DIR)/bin/iwrflasher-spi
 
-FIRMWARE.PREBUILT.FILENAME=motion_and_presence_detection_demo.debug.appimage
+#FIRMWARE.PREBUILT.FILENAME=motion_and_presence_detection_demo.debug.appimage
+FIRMWARE.PREBUILD.FILENAME=uart_echo.Release.appimage
 FIRMWARE.PREBUILT.URL=https://buildroot-sources.s3.us-east-1.amazonaws.com/$(FIRMWARE.PREBUILT.FILENAME)
 FIRMWARE.PREBUILT.PATH=$(DOWNLOADS.DIR)/$(FIRMWARE.PREBUILT.FILENAME)
 
