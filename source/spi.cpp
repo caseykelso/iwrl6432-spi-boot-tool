@@ -246,13 +246,14 @@ void block_until_spi_ready(const spi_config_t config)
 /* Transferring appimage via SPI */
 void spiboot(spi_config_t config)
 {   
-    const uint32_t RX_BUFFER_SIZE = 128;
-    uint32_t padded_data          = 16-(Size%16); //Extra bytes to make image size multiple of 16 
-    uint32_t padding              = padded_data/4;
-    uint32_t crc                  = 0x0;
-    uint8_t  rx[RX_BUFFER_SIZE]   = {0};
+    const uint32_t RX_BUFFER_SIZE     = 128;
+    const uint8_t FIRMWARE_ALIGNMENT  = 16;
+    uint32_t number_of_padding_bytes  = FIRMWARE_ALIGNMENT - (Size % FIRMWARE_ALIGNMENT); //Extra bytes to make image size multiple of 16 
+    uint32_t number_of_padding_words  = number_of_padding_bytes/4;
+    uint32_t crc                      = 0x0;
+    uint8_t  rx[RX_BUFFER_SIZE]       = {0};
 
-    Size = 8192;
+    //Size = 8192;
 
     std::cout << "Booting via SPI ..." << std::endl;
     std::cout << "Transferring appimage via SPI ..." << std::endl;
@@ -292,8 +293,8 @@ void spiboot(spi_config_t config)
 
     // reverse the MSB/LSB on each 16-bit word on the SPI_CMD_TYPE and the LONG_MSG_SIZE members
     CONTINUOUS_IMAGE_DOWNLOAD_CMD_COPY[1] = double_reversal(CONTINUOUS_IMAGE_DOWNLOAD_CMD_COPY[1]);
-    CONTINUOUS_IMAGE_DOWNLOAD_CMD_COPY[4] = reverse_16bits(double_reversal(Size)); // SPI_DOWNLOAD_SIZE_IN_BYTES = META_IMAGE_SIZE + padding for 16 byte alignment
-    CONTINUOUS_IMAGE_DOWNLOAD_CMD_COPY[5] = reverse_16bits(double_reversal(Size)); // FIRMWARE_SIZE without padding
+    CONTINUOUS_IMAGE_DOWNLOAD_CMD_COPY[4] = double_reversal(Size + number_of_padding_bytes); // SPI_DOWNLOAD_SIZE_IN_BYTES = META_IMAGE_SIZE + padding for 16 byte alignment
+    CONTINUOUS_IMAGE_DOWNLOAD_CMD_COPY[5] = double_reversal(Size); // FIRMWARE_SIZE without padding
 
     // pack the message into a vector
     std::vector<uint32_t> v32_DOWNLOAD(std::begin(CONTINUOUS_IMAGE_DOWNLOAD_CMD_COPY), std::end(CONTINUOUS_IMAGE_DOWNLOAD_CMD_COPY));
@@ -304,9 +305,9 @@ void spiboot(spi_config_t config)
     std::cout  << "crc: " << std::hex << crc << std::endl;
     CONTINUOUS_IMAGE_DOWNLOAD_CMD_COPY[0] = double_reversal(crc);
 
-    CONTINUOUS_IMAGE_DOWNLOAD_CMD_COPY[1] = double_reversal(CONTINUOUS_IMAGE_DOWNLOAD_CMD_COPY[1]);
-    CONTINUOUS_IMAGE_DOWNLOAD_CMD_COPY[4] = (double_reversal(Size)); //reverse_16bits(8192); // SPI_DOWNLOAD_SIZE_IN_BYTES = META_IMAGE_SIZE + padding for 16 byte alignment
-    CONTINUOUS_IMAGE_DOWNLOAD_CMD_COPY[5] = (double_reversal(Size)); // FIRMWARE_SIZE without padding
+    CONTINUOUS_IMAGE_DOWNLOAD_CMD_COPY[1] = reverse_16bits(CONTINUOUS_IMAGE_DOWNLOAD_CMD_COPY[1]);
+    CONTINUOUS_IMAGE_DOWNLOAD_CMD_COPY[4] = reverse_16bits(double_reversal(Size + number_of_padding_bytes)); //reverse_16bits(8192); // SPI_DOWNLOAD_SIZE_IN_BYTES = META_IMAGE_SIZE + padding for 16 byte alignment
+    CONTINUOUS_IMAGE_DOWNLOAD_CMD_COPY[5] = reverse_16bits(double_reversal(Size)); // FIRMWARE_SIZE without padding
     std::cout << "CONTINUOUS_IMAGE_DOWNLOAD_CMD_COPY: " << std::hex << Size << std::endl;
     spi_transfer((uint8_t*)CONTINUOUS_IMAGE_DOWNLOAD_CMD_COPY, NULL, 32, config);
     std::cout << "waiting" << std::endl;
