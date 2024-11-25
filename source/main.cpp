@@ -24,13 +24,7 @@ const int     IWRL6432_RESET_ACTIVE    = 0;
 const int     IWRL6432_RESET_INACTIVE  = 1;
 spi_config_t  spi_config               = {};
 
-const uint8_t DUMMY_SIZE = 24;
-uint32_t DUMMY_CRC_VALUE = { 0x28306198 };
-uint32_t DUMMY_CRC_MESSAGE_32_NO_REVERSE[] =  {0xFFFFFFFF, 0x1A000000, 0x00000000, 0x00000000};
-
-uint8_t DUMMY_CRC_MESSAGE_REVERSED[DUMMY_SIZE];
-uint8_t TEST_GET_RBL_STATUS_CMD[] = {0x0, 0x10, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0 };
-uint8_t TEST_SWITCH_TO_APPLICATION_CMD[] = {0x0, 0x0, 0x0, 0x0, 0x0, 0x1A, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0};
+uint32_t SWITCH_TO_APPLICATION_CMD[] =  {0xFFFFFFFF, 0x001A0000, 0x00000000, 0x00000000};
 
 //callback to get spi busy gpio state, this is important to decouple the spi and gpio implementations
 bool gpio_spi_busy()
@@ -66,9 +60,23 @@ void siginthandler(int param)
 int main(void)
 {
 #ifdef CALC32_DUMMY
- //std::vector<uint8_t> v(std::begin(DUMMY_CRC_MESSAGE), std::end(DUMMY_CRC_MESSAGE));
-   std::vector<uint32_t> v32(std::begin(DUMMY_CRC_MESSAGE_32_NO_REVERSE), std::end(DUMMY_CRC_MESSAGE_32_NO_REVERSE));
+
+   // make a copy of the command  so that we can modify it before sending it over the SPI bus
+   uint32_t SWITCH_TO_APPLICATION_CMD_COPY[sizeof(SWITCH_TO_APPLICATION_CMD)];
+   std::copy(std::begin(SWITCH_TO_APPLICATION_CMD), std::end(SWITCH_TO_APPLICATION_CMD), std::begin(SWITCH_TO_APPLICATION_CMD_COPY));
+
+   // revese the MSB/LSB on each 16-bit word on the SPI_CMD_TYPE and the LONG_MSG_SIZE members
+   SWITCH_TO_APPLICATION_CMD_COPY[1] = double_reversal(SWITCH_TO_APPLICATION_CMD_COPY[1]);
+   std::cout << std::hex << SWITCH_TO_APPLICATION_CMD_COPY[0] << std::endl;
+
+   // pack the message into a vector
+   std::vector<uint32_t> v32(std::begin(SWITCH_TO_APPLICATION_CMD_COPY), std::end(SWITCH_TO_APPLICATION_CMD_COPY));
+
+   // calculate the crc32 for the message
    uint32_t crc = calculate_crc32(v32, 0x04C11DB7, 0xFFFFFFFF, 0xFFFFFFFF, true);
+   uint32_t a = 0x001A0000;
+   std::cout << "before: " << std::hex << a << std::endl;
+   std::cout << "after: " << std::hex << double_reversal(a) << std::endl; 
    std::cout << "crc32: " << std::hex << crc << std::endl;
 #else
 	const std::string gpiod_chip_name("gpiochip0");

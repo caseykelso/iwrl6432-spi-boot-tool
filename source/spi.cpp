@@ -53,7 +53,7 @@ so that overall image size should become multiple of 16 */
 const uint32_t SPIDEV_MAX_BLOCK_SIZE = 4096;
 uint32_t* dummy_data = NULL;
 uint32_t continuousImageDownloadRESP[8] = {0};
-uint32_t SwitchToApplicationCMD[] = {0x00000000, 0x001A00000, 0x00000000, 0x00000000}; // SWITCH_TO_APPLICATION_CMD
+const uint32_t SwitchToApplicationCMD[] = {0x00000000, 0x001A0000, 0x00000000, 0x00000000}; // SWITCH_TO_APPLICATION_CMD
 uint32_t SwitchToApplicationRESP[] = {0x0000,0x0000,0x0000,0x0000}; // SWITCH_TO_APPLICATION_RESP
 //uint32_t GET_RBL_STATUS_CMD[] = {0x0, 00100000, 0, 0};
 
@@ -331,64 +331,21 @@ void spiboot(spi_config_t config)
 #endif
 #define APPLICATION_SWITCH 1
 #if APPLICATION_SWITCH
-    //std::vector<uint8_t> v(std::begin((uint8_t[])SwitchToApplicationCMD), std::end(SwitchToApplicationCMD));
 
     std::vector<uint32_t> v32(std::begin(SwitchToApplicationCMD), std::end(SwitchToApplicationCMD));
-    std::vector<uint8_t> v8;
-    uint8_t element_count = 0;
+   
+    uint32_t crc = calculate_crc32(v32, 0x04C11DB7, 0xFFFFFFFF, 0xFFFFFFFF, true);
+    std::cout << "SwitchToApplicationCMD CRC32: " << std::hex << crc << std::endl;
 
-    for (auto &element : v32)
-    {
-        std::cout << "element_count: " << unsigned(element_count) << std::endl;
-        if (element_count >= 1) // slip the crc field
-        { 
-            std::cout << "not flipped: " << std::hex << element << std::endl;
-            uint32_t flipped = arrange_bytes(element);
-            std::cout << "flipped: " << std::hex << flipped << std::endl; 
-            uint8_t flipped_bytes[4];
-            std::memcpy((void*)flipped_bytes, (void*)flipped, 4);
+    uint32_t SwitchToApplicationCMD_COPY[sizeof(SwitchToApplicationCMD)];
+    std::copy(std::begin(SwitchToApplicationCMD), std::end(SwitchToApplicationCMD), std::begin(SwitchToApplicationCMD_COPY));
 
-            for (uint8_t i = 0; i < 4; ++i)
-            {
-                v8.push_back(flipped_bytes[0]);    
-            }
-        }
-        ++element_count;
-    }
-
-#if 0
-    uint8_t *num = (uint8_t*)SwitchToApplicationCMD;
-    for (uint8_t i = 0; i < 12; ++i)
-    {
-        if (i >= 4)
-        {
-            v8.push_back(*num);
-        }
-        num++;
-    }
-#endif
-#if 0
-    for (uint8_t i = 0; i < 5; ++i)
-    {
-        v.push_back(0x0);
-    }
-#endif
-#if 0
-    std::cout << "vector: ";
-    for (auto & element : v8)
-    {
-        std::cout << std::hex << unsigned(element);
-    }
-    std::cout << std::endl;
-    
-    uint32_t crc = calculate_crc32(v8, 0x04C11DB7, 0xFFFFFFFF, 0xFFFFFFFF, true);
-
-    SwitchToApplicationCMD[0] = arrange_bytes(crc);
-    spi_transfer((uint8_t*)SwitchToApplicationCMD, rx, 16, config);
+    SwitchToApplicationCMD_COPY[0] = crc;
+    SwitchToApplicationCMD_COPY[1] = double_reversal(SwitchToApplicationCMD_COPY[1]);
+    spi_transfer((uint8_t*)SwitchToApplicationCMD_COPY, rx, 16, config);
     std::cout << "waiting" << std::endl;
     block_until_spi_ready(config);
     spi_transfer((uint8_t*)SwitchToApplicationRESP, rx, 32, config);
-#endif
 #endif
  
 //    std::this_thread::sleep_for(std::chrono::milliseconds(1000));

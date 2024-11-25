@@ -17,11 +17,42 @@ uint32_t reverse_bits(uint32_t value, const uint32_t bitCount)
     return result;
 }
 
+
+uint32_t reverse_bytes_upper_16bits(const uint32_t bytes)
+{
+    uint32_t result = 0x0;
+    result = (((0xFF000000 & bytes) >> 8) | ((0x00FF0000 & bytes) << 8) | (0x0000FFFF & bytes));
+    return result;
+}
+
+uint32_t reverse_bytes_lower_16bits(const uint32_t bytes)
+{
+    uint32_t result = 0x0;
+    result = (((0x0000FF00 & bytes) >> 8) | ((0x000000FF & bytes) << 8) | (0xFFFF0000 & bytes));
+    return result;
+}
+
 uint32_t reverse_bytes(const uint32_t bytes)
 {
     uint32_t result = 0x0;
     result = (((0xFF000000 & bytes) >> 24)  | ((0x00FF0000 & bytes) >> 8) | ((0x0000FF00 & bytes) << 8) | ((0x000000FF & bytes) << 24));
     return result;
+}
+
+uint32_t reverse_16bits(const uint32_t bytes)
+{
+    uint32_t result = 0x0;
+    result = (((0xFFFF0000 & bytes) >> 16) | ((0x0000FFFF & bytes) << 16));
+    return result;
+}
+
+uint32_t double_reversal(const uint32_t bytes)
+{
+    uint32_t result = 0x0;
+    result = reverse_bytes_upper_16bits(bytes);
+    result = reverse_bytes_lower_16bits(result);
+//    result = reverse_16bits(result);
+    return(result);
 }
 
 
