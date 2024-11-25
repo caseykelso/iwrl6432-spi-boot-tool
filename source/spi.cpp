@@ -37,7 +37,7 @@
 #define APP_CRC_BYTE_SWAP                   0
 
 const uint32_t SPIDEV_MAX_BLOCK_SIZE = 4096;
-uint32_t* dummy_data = NULL;
+uint8_t dummy_data[1024] = {0};
 uint32_t crcValue=0;
 
 const uint32_t CONTINUOUS_IMAGE_DOWNLOAD_CMD[] = {0x00000000, 0x00180010, 0x00000000, 0x00000000, 0x00000000, 0x0000000, 0x000000, 0x0000000};
@@ -246,16 +246,19 @@ void block_until_spi_ready(const spi_config_t config)
 /* Transferring appimage via SPI */
 void spiboot(spi_config_t config)
 {   
-    uint32_t padded_data   = 16-(Size%16); //Extra bytes to make image size multiple of 16 
-    uint32_t padding       = padded_data/4;
+    const uint32_t RX_BUFFER_SIZE = 128;
+    uint32_t padded_data          = 16-(Size%16); //Extra bytes to make image size multiple of 16 
+    uint32_t padding              = padded_data/4;
+    uint32_t crc                  = 0x0;
+    uint8_t  rx[RX_BUFFER_SIZE]   = {0};
 
     std::cout << "Booting via SPI ..." << std::endl;
     std::cout << "Transferring appimage via SPI ..." << std::endl;
     
     /* calculation of CRC for Continuous Image Download Command */
     calculatecrc32();
-
-#ifdef STATUS_CMD
+#define STATUS_CMD 1
+#if STATUS_CMD
     // make a copy of the command  so that we can modify it before sending it over the SPI bus
     uint32_t GET_RBL_STATUS_CMD_COPY[sizeof(GET_RBL_STATUS_CMD)/sizeof(GET_RBL_STATUS_CMD[0])];
     std::copy(std::begin(GET_RBL_STATUS_CMD), std::end(GET_RBL_STATUS_CMD), std::begin(GET_RBL_STATUS_CMD_COPY));
@@ -264,10 +267,10 @@ void spiboot(spi_config_t config)
     GET_RBL_STATUS_CMD_COPY[1] = double_reversal(GET_RBL_STATUS_CMD_COPY[1]);
 
     // pack the message into a vector
-    std::vector<uint32_t> v32(std::begin(GET_RBL_STATUS_CMD_COPY), std::end(GET_RBL_STATUS_CMD_COPY));
+    std::vector<uint32_t> v32_STATUS(std::begin(GET_RBL_STATUS_CMD_COPY), std::end(GET_RBL_STATUS_CMD_COPY));
 
     // calculate the crc32 for the message
-    uint32_t crc = calculate_crc32(v32, 0x04C11DB7, 0xFFFFFFFF, 0xFFFFFFFF, true);
+    crc = calculate_crc32(v32_STATUS, 0x04C11DB7, 0xFFFFFFFF, 0xFFFFFFFF, true);
 
     GET_RBL_STATUS_CMD_COPY[0] = double_reversal(crc);
 
@@ -275,27 +278,28 @@ void spiboot(spi_config_t config)
     spi_transfer((uint8_t*)GET_RBL_STATUS_CMD_COPY, NULL, 16, config);
     std::cout << "waiting" << std::endl;
     block_until_spi_ready(config);
+    spi_transfer((uint8_t*)dummy_data, rx, 32, config);
 #endif //STATUS_CMD
 
-#define CONTINUOUS_DOWNLOAD 1
+#define CONTINUOUS_DOWNLOAD 0
 #if CONTINUOUS_DOWNLOAD
     // make a copy of the command  so that we can modify it before sending it over the SPI bus
-    uint32_t GET_RBL_STATUS_CMD_COPY[sizeof(GET_RBL_STATUS_CMD)/sizeof(GET_RBL_STATUS_CMD[0])];
-    std::copy(std::begin(GET_RBL_STATUS_CMD), std::end(GET_RBL_STATUS_CMD), std::begin(GET_RBL_STATUS_CMD_COPY));
+    uint32_t CONTINUOUS_IMAGE_DOWNLOAD_CMD_COPY[sizeof(CONTINUOUS_IMAGE_DOWNLOAD_CMD)/sizeof(CONTINUOUS_IMAGE_DOWNLOAD_CMD[0])];
+    std::copy(std::begin(CONTINUOUS_IMAGE_DOWNLOAD_CMD), std::end(CONTINUOUS_IMAGE_DOWNLOAD_CMD), std::begin(CONTINUOUS_IMAGE_DOWNLOAD_CMD_COPY));
 
     // reverse the MSB/LSB on each 16-bit word on the SPI_CMD_TYPE and the LONG_MSG_SIZE members
-    GET_RBL_STATUS_CMD_COPY[1] = double_reversal(GET_RBL_STATUS_CMD_COPY[1]);
+    CONTINUOUS_IMAGE_DOWNLOAD_CMD_COPY[1] = double_reversal(CONTINUOUS_IMAGE_DOWNLOAD_CMD_COPY[1]);
 
     // pack the message into a vector
-    std::vector<uint32_t> v32(std::begin(GET_RBL_STATUS_CMD_COPY), std::end(GET_RBL_STATUS_CMD_COPY));
+    std::vector<uint32_t> v32_DOWNLOAD(std::begin(CONTINUOUS_IMAGE_DOWNLOAD_CMD_COPY), std::end(CONTINUOUS_IMAGE_DOWNLOAD_CMD_COPY));
 
     // calculate the crc32 for the message
-    uint32_t crc = calculate_crc32(v32, 0x04C11DB7, 0xFFFFFFFF, 0xFFFFFFFF, true);
+    uint32_t crc = calculate_crc32(v32_DOWNLOAD, 0x04C11DB7, 0xFFFFFFFF, 0xFFFFFFFF, true);
 
-    GET_RBL_STATUS_CMD_COPY[0] = double_reversal(crc);
+    CONTINUOUS_IMAGE_DOWNLOAD_CMD_COPY[0] = double_reversal(crc);
 
-    GET_RBL_STATUS_CMD_COPY[1] = reverse_16bits(GET_RBL_STATUS_CMD_COPY[1]);
-    spi_transfer((uint8_t*)GET_RBL_STATUS_CMD_COPY, NULL, 16, config);
+    CONTINUOUS_IMAGE_DOWNLOAD_CMD_COPY[1] = reverse_16bits(CONTINUOUS_IMAGE_DOWNLOAD_CMD_COPY[1]);
+    spi_transfer((uint8_t*)CONTINUOUS_IMAGE_DOWNLOAD_CMD_COPY, NULL, 16, config);
     std::cout << "waiting" << std::endl;
     block_until_spi_ready(config);
 #endif
@@ -305,10 +309,11 @@ void spiboot(spi_config_t config)
     uint32_t SwitchToApplicationCMD_COPY[sizeof(SwitchToApplicationCMD)/sizeof(SwitchToApplicationCMD[0])];
     std::copy(std::begin(SwitchToApplicationCMD), std::end(SwitchToApplicationCMD), std::begin(SwitchToApplicationCMD_COPY));
     SwitchToApplicationCMD_COPY[1] = double_reversal(SwitchToApplicationCMD_COPY[1]);
+
     std::cout << std::hex << SwitchToApplicationCMD_COPY[1] << std::endl;
-    std::vector<uint32_t> v32(std::begin(SwitchToApplicationCMD_COPY), std::end(SwitchToApplicationCMD_COPY));
+    std::vector<uint32_t> v32_SWITCH(std::begin(SwitchToApplicationCMD_COPY), std::end(SwitchToApplicationCMD_COPY));
    
-    uint32_t crc = calculate_crc32(v32, 0x04C11DB7, 0xFFFFFFFF, 0xFFFFFFFF, true);
+    crc = calculate_crc32(v32_SWITCH, 0x04C11DB7, 0xFFFFFFFF, 0xFFFFFFFF, true);
     std::cout << "SwitchToApplicationCMD CRC32: " << std::hex << crc << std::endl;
 
     SwitchToApplicationCMD_COPY[0] = double_reversal(crc);
