@@ -314,7 +314,7 @@ void spiboot(spi_config_t config)
     {
         v.push_back(0x0);
     }
-    uint32_t crc = calculateCRC32(v, 0x04C11DB7, 0xFFFFFFFF, 0xFFFFFFFF, true);
+    uint32_t crc = calculate_crc32(v, 0x04C11DB7, 0xFFFFFFFF, 0xFFFFFFFF, true);
 
     GET_RBL_STATUS_CMD[0] = arrange_bytes(crc);
     spi_transfer((uint8_t*)GET_RBL_STATUS_CMD, NULL, 16, config);
@@ -373,7 +373,7 @@ void spiboot(spi_config_t config)
         v.push_back(0x0);
     }
 #endif
-
+#if 0
     std::cout << "vector: ";
     for (auto & element : v8)
     {
@@ -381,13 +381,14 @@ void spiboot(spi_config_t config)
     }
     std::cout << std::endl;
     
-    uint32_t crc = calculateCRC32(v8, 0x04C11DB7, 0xFFFFFFFF, 0xFFFFFFFF, true);
+    uint32_t crc = calculate_crc32(v8, 0x04C11DB7, 0xFFFFFFFF, 0xFFFFFFFF, true);
 
     SwitchToApplicationCMD[0] = arrange_bytes(crc);
     spi_transfer((uint8_t*)SwitchToApplicationCMD, rx, 16, config);
     std::cout << "waiting" << std::endl;
     block_until_spi_ready(config);
     spi_transfer((uint8_t*)SwitchToApplicationRESP, rx, 32, config);
+#endif
 #endif
  
 //    std::this_thread::sleep_for(std::chrono::milliseconds(1000));

@@ -4,8 +4,7 @@
 #include "crc.h"
 #include <iostream>
 
-// Function to reverse bits in an integer (similar to the Python version)
-uint32_t reverseBits(uint32_t value, uint32_t bitCount) 
+uint32_t reverse_bits(uint32_t value, const uint32_t bitCount) 
 {
     uint32_t result = 0;
 
@@ -18,25 +17,28 @@ uint32_t reverseBits(uint32_t value, uint32_t bitCount)
     return result;
 }
 
+uint32_t reverse_bytes(const uint32_t bytes)
+{
+    uint32_t result = 0x0;
+    result = (((0xFF000000 & bytes) >> 24)  | ((0x00FF0000 & bytes) >> 8) | ((0x0000FF00 & bytes) << 8) | ((0x000000FF & bytes) << 24));
+    return result;
+}
 
-// Function to calculate CRC32 in the same manner as the Python implementation
-uint32_t calculateCRC32(const std::vector<uint32_t>& payload, uint32_t poly = 0x04C11DB7, uint32_t initCRC = 0xFFFFFFFF, uint32_t xorOut = 0xFFFFFFFF, bool reverse = false) 
+
+uint32_t calculate_crc32(const std::vector<uint32_t>& payload, uint32_t poly = 0x04C11DB7, uint32_t initCRC = 0xFFFFFFFF, uint32_t xorOut = 0xFFFFFFFF, bool reverse = false) 
 {
     uint32_t crc                   = initCRC;
-    const uint8_t SKIP_CRC_FIELD   = 4;
+    const uint8_t SKIP_CRC_FIELD   = 1;
+    const uint8_t INCREMENT_32BITS = 1;
 
     // Process the payload in 4-byte chunks
     for (size_t i = SKIP_CRC_FIELD; i < payload.size(); i += INCREMENT_32BITS) 
     {
-        // Extract a 4-byte chunk
-        uint32_t chunk = 0;
-        std::vector<uint8_t> chunkBytes(4, 0);
-        std::memcpy(&chunkBytes[0], &payload[i], std::min<size_t>(4, payload.size() - i));
-        chunk = (chunkBytes[0] << 24) | (chunkBytes[1] << 16) | (chunkBytes[2] << 8) | chunkBytes[3];
+        uint32_t chunk = reverse_bytes(payload[i]);
 
         if (reverse) 
         {
-            chunk = reverseBits(chunk, 32); // Reverse bits if needed
+            chunk = reverse_bits(chunk, 32); // Reverse bits if needed
         }
 
         // XOR the chunk into the CRC register
@@ -59,7 +61,7 @@ uint32_t calculateCRC32(const std::vector<uint32_t>& payload, uint32_t poly = 0x
     // Reverse bits of the CRC value if needed
     if (reverse) 
     {
-        crc = reverseBits(crc, 32);
+        crc = reverse_bits(crc, 32);
     }
 
     // Apply the XOR-out value

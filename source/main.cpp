@@ -26,11 +26,7 @@ spi_config_t  spi_config               = {};
 
 const uint8_t DUMMY_SIZE = 24;
 uint32_t DUMMY_CRC_VALUE = { 0x28306198 };
-//uint8_t DUMMY_CRC_MESSAGE[] = { 0x00, 0x1B, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x15, 0x00, 0x00};
-//uint8_t DUMMY_CRC_MESSAGE[] = { 0x00, 0x1A, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
-//uint32_t DUMMY_CRC_MESSAGE[] = {0x9DFAC3F2,0x0000001A,0x0000,0x0000, 0x00, 0x0, 0x0};
-uint8_t DUMMY_CRC_MESSAGE[] =  {0xFF, 0xFF, 0xFF, 0xFF, 0x00, 0x00, 0x00, 0x1A, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
-uint32_t DUMMY_CRC_MESSAGE_32[] =  {0xFFFFFFFF, 0x0000001A, 0x00000000, 0x00000000};
+uint32_t DUMMY_CRC_MESSAGE_32_NO_REVERSE[] =  {0xFFFFFFFF, 0x1A000000, 0x00000000, 0x00000000};
 
 uint8_t DUMMY_CRC_MESSAGE_REVERSED[DUMMY_SIZE];
 uint8_t TEST_GET_RBL_STATUS_CMD[] = {0x0, 0x10, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0 };
@@ -71,8 +67,8 @@ int main(void)
 {
 #ifdef CALC32_DUMMY
  //std::vector<uint8_t> v(std::begin(DUMMY_CRC_MESSAGE), std::end(DUMMY_CRC_MESSAGE));
-   std::vector<uint32_t> v32(std::begin(DUMMY_CRC_MESSAGE_32), std::end(DUMMY_CRC_MESSAGE_32));
-   uint32_t crc = calculateCRC32(v32, 0x04C11DB7, 0xFFFFFFFF, 0xFFFFFFFF, true);
+   std::vector<uint32_t> v32(std::begin(DUMMY_CRC_MESSAGE_32_NO_REVERSE), std::end(DUMMY_CRC_MESSAGE_32_NO_REVERSE));
+   uint32_t crc = calculate_crc32(v32, 0x04C11DB7, 0xFFFFFFFF, 0xFFFFFFFF, true);
    std::cout << "crc32: " << std::hex << crc << std::endl;
 #else
 	const std::string gpiod_chip_name("gpiochip0");
