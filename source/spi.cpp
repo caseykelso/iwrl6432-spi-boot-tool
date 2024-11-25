@@ -279,6 +279,7 @@ void spiboot(spi_config_t config)
     std::cout << "waiting" << std::endl;
     block_until_spi_ready(config);
     spi_transfer((uint8_t*)dummy_data, rx, 32, config);
+    block_until_spi_ready(config);
 #endif //STATUS_CMD
 
 #define CONTINUOUS_DOWNLOAD 0
@@ -304,7 +305,7 @@ void spiboot(spi_config_t config)
     block_until_spi_ready(config);
 #endif
 
-#define APPLICATION_SWITCH 0
+#define APPLICATION_SWITCH 1
 #if APPLICATION_SWITCH
     uint32_t SwitchToApplicationCMD_COPY[sizeof(SwitchToApplicationCMD)/sizeof(SwitchToApplicationCMD[0])];
     std::copy(std::begin(SwitchToApplicationCMD), std::end(SwitchToApplicationCMD), std::begin(SwitchToApplicationCMD_COPY));
@@ -322,6 +323,9 @@ void spiboot(spi_config_t config)
     spi_transfer((uint8_t*)SwitchToApplicationCMD_COPY, NULL, 16, config);
     std::cout << "waiting" << std::endl;
     block_until_spi_ready(config);
+    spi_transfer((uint8_t*)dummy_data, rx, 16, config);
+    block_until_spi_ready(config);
+
 //    spi_transfer((uint8_t*)SwitchToApplicationRESP, rx, 32, config);
 #endif
  
