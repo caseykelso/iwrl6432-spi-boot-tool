@@ -36,7 +36,7 @@
 #define APP_CRC_BIT_SWAP                    1
 #define APP_CRC_BYTE_SWAP                   0
 
-const uint32_t SPIDEV_MAX_BLOCK_SIZE = 4096;
+const uint32_t SPIDEV_MAX_BLOCK_SIZE = 2048;
 uint8_t dummy_data[1024] = {0};
 uint32_t crcValue=0;
 
@@ -102,7 +102,7 @@ void spi_transfer(uint8_t *tx, uint8_t *rx, uint32_t length, spi_config_t config
         }
         else
         {
-	        std::cout << unsigned(result) << std::endl;
+//	        std::cout << unsigned(result) << std::endl;
         }
 }
 
@@ -246,7 +246,7 @@ void block_until_spi_ready(const spi_config_t config)
 /* Transferring appimage via SPI */
 void spiboot(spi_config_t config)
 {   
-    const uint32_t RX_BUFFER_SIZE     = 128;
+    const uint32_t RX_BUFFER_SIZE     = 1024;
     const uint8_t FIRMWARE_ALIGNMENT  = 16;
     uint32_t number_of_padding_bytes  = FIRMWARE_ALIGNMENT - (Size % FIRMWARE_ALIGNMENT); //Extra bytes to make image size multiple of 16 
     uint32_t number_of_padding_words  = number_of_padding_bytes/4;
@@ -312,10 +312,10 @@ void spiboot(spi_config_t config)
     spi_transfer((uint8_t*)CONTINUOUS_IMAGE_DOWNLOAD_CMD_COPY, NULL, 32, config);
     std::cout << "waiting" << std::endl;
     block_until_spi_ready(config);
-    spi_transfer((uint8_t*)dummy_data, NULL, 32, config);
-    block_until_spi_ready(config);
+//    spi_transfer((uint8_t*)dummy_data, NULL, 32, config);
+//    block_until_spi_ready(config);
 
-#if 0
+#if 1
     // Send firmware in SPIDEV_MAX_BLOCK_SIZE chunks
     for (uint32_t i = 0; i < Size; i = i + SPIDEV_MAX_BLOCK_SIZE)
     {
@@ -337,11 +337,15 @@ void spiboot(spi_config_t config)
             std::cout << "*" << std::endl;
         }
 
-        spi_transfer((uint8_t*)image + i, NULL, block_size, config);
+        std::cout << "count: " << std::hex << unsigned(i) << std::endl;
+        block_until_spi_ready(config);
+        spi_transfer((uint8_t*)(image + i), NULL, block_size, config);
     }
 
+    std::cout << "after for loop" << std::endl;
+#if 0
     //TODO: set size here for dummy data
-    spi_transfer((uint8_t*)dummy_data, NULL, size, config);
+    spi_transfer((uint8_t*)dummy_data, NULL, number_of_padding_words, config);
     std::cout << "transfer dummy data: " << size << std::endl;
     block_until_spi_ready(config);
 
@@ -362,6 +366,7 @@ void spiboot(spi_config_t config)
     std::cout << "transfer switch to application response: " << size << std::endl;
 
     //TODO: put in check for success
+#endif
 #endif
 
 #endif
