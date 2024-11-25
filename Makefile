@@ -51,6 +51,9 @@ ci: firmware firmware.convert.appimage.to.hex build.waffle build.x86
 run: .FORCE
 	$(BUILD.DIR)/xwrflasher
 
+gdb: .FORCE
+	gdb $(BUILD.DIR)/xwrflasher
+
 gpiod: .FORCE
 	rm -rf $(GPIOD.DIR)
 	mkdir -p $(DOWNLOADS.DIR)
