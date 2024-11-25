@@ -310,53 +310,7 @@ void spiboot(spi_config_t config)
     block_until_spi_ready(config);
     spi_transfer((uint8_t*)dummy_data, NULL, 32, config);
     block_until_spi_ready(config);
-#endif
 
-#define APPLICATION_SWITCH 0
-#if APPLICATION_SWITCH
-    uint32_t SwitchToApplicationCMD_COPY[sizeof(SwitchToApplicationCMD)/sizeof(SwitchToApplicationCMD[0])];
-    std::copy(std::begin(SwitchToApplicationCMD), std::end(SwitchToApplicationCMD), std::begin(SwitchToApplicationCMD_COPY));
-    SwitchToApplicationCMD_COPY[1] = double_reversal(SwitchToApplicationCMD_COPY[1]);
-
-    std::cout << std::hex << SwitchToApplicationCMD_COPY[1] << std::endl;
-    std::vector<uint32_t> v32_SWITCH(std::begin(SwitchToApplicationCMD_COPY), std::end(SwitchToApplicationCMD_COPY));
-   
-    crc = calculate_crc32(v32_SWITCH, 0x04C11DB7, 0xFFFFFFFF, 0xFFFFFFFF, true);
-    std::cout << "SwitchToApplicationCMD CRC32: " << std::hex << crc << std::endl;
-
-    SwitchToApplicationCMD_COPY[0] = double_reversal(crc);
-    SwitchToApplicationCMD_COPY[1] = reverse_16bits(SwitchToApplicationCMD_COPY[1]);
- 
-    spi_transfer((uint8_t*)SwitchToApplicationCMD_COPY, NULL, 16, config);
-    std::cout << "waiting" << std::endl;
-    block_until_spi_ready(config);
-    spi_transfer((uint8_t*)dummy_data, rx, 16, config);
-    block_until_spi_ready(config);
-
-//    spi_transfer((uint8_t*)SwitchToApplicationRESP, rx, 32, config);
-#endif
- 
-//    std::this_thread::sleep_for(std::chrono::milliseconds(1000));
- 
-//    spi_transfer((uint8_t*)SwitchToApplicationRESP, rx, 32/2, config);
-//    spi_transfer((uint8_t*)GET_RBL_STATUS_CMD, rx, 16, config);
-//    spi_transfer(tx, rx, size, config);
-#if 0
-    std::cout << "transfer download command: " << size << std::endl;
-   
-    std::cout << "1" << std::endl; 
-    std::this_thread::sleep_for(std::chrono::milliseconds(1000));
- 
-    block_until_spi_ready(config);
-    std::cout << "2" << std::endl; 
-#endif
-#if 0
-    spi_transfer((uint8_t*)GET_RBL_STATUS_CMD , NULL, size, config); 
-    std::cout << "transfer download command: " << size << std::endl;
-    std::cout << "3" << std::endl; 
-    block_until_spi_ready(config);
-
-#endif 
 #if 0
     // Send firmware in SPIDEV_MAX_BLOCK_SIZE chunks
     for (uint32_t i = 0; i < Size; i = i + SPIDEV_MAX_BLOCK_SIZE)
@@ -405,6 +359,31 @@ void spiboot(spi_config_t config)
 
     //TODO: put in check for success
 #endif
+
+#endif
+
+#define APPLICATION_SWITCH 0
+#if APPLICATION_SWITCH
+    uint32_t SwitchToApplicationCMD_COPY[sizeof(SwitchToApplicationCMD)/sizeof(SwitchToApplicationCMD[0])];
+    std::copy(std::begin(SwitchToApplicationCMD), std::end(SwitchToApplicationCMD), std::begin(SwitchToApplicationCMD_COPY));
+    SwitchToApplicationCMD_COPY[1] = double_reversal(SwitchToApplicationCMD_COPY[1]);
+
+    std::cout << std::hex << SwitchToApplicationCMD_COPY[1] << std::endl;
+    std::vector<uint32_t> v32_SWITCH(std::begin(SwitchToApplicationCMD_COPY), std::end(SwitchToApplicationCMD_COPY));
+   
+    crc = calculate_crc32(v32_SWITCH, 0x04C11DB7, 0xFFFFFFFF, 0xFFFFFFFF, true);
+    std::cout << "SwitchToApplicationCMD CRC32: " << std::hex << crc << std::endl;
+
+    SwitchToApplicationCMD_COPY[0] = double_reversal(crc);
+    SwitchToApplicationCMD_COPY[1] = reverse_16bits(SwitchToApplicationCMD_COPY[1]);
+ 
+    spi_transfer((uint8_t*)SwitchToApplicationCMD_COPY, NULL, 16, config);
+    std::cout << "waiting" << std::endl;
+    block_until_spi_ready(config);
+    spi_transfer((uint8_t*)dummy_data, rx, 16, config);
+    block_until_spi_ready(config);
+#endif
+ 
     std::cout << "Booting via SPI is completed." << std::endl;
 }
 
