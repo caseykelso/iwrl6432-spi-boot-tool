@@ -62,12 +62,12 @@ int main(void)
 #ifdef CALC32_DUMMY
 
    // make a copy of the command  so that we can modify it before sending it over the SPI bus
-   uint32_t SWITCH_TO_APPLICATION_CMD_COPY[sizeof(SWITCH_TO_APPLICATION_CMD)];
+   uint32_t SWITCH_TO_APPLICATION_CMD_COPY[sizeof(SWITCH_TO_APPLICATION_CMD)/sizeof(SWITCH_TO_APPLICATION_CMD[0])];
    std::copy(std::begin(SWITCH_TO_APPLICATION_CMD), std::end(SWITCH_TO_APPLICATION_CMD), std::begin(SWITCH_TO_APPLICATION_CMD_COPY));
 
    // revese the MSB/LSB on each 16-bit word on the SPI_CMD_TYPE and the LONG_MSG_SIZE members
    SWITCH_TO_APPLICATION_CMD_COPY[1] = double_reversal(SWITCH_TO_APPLICATION_CMD_COPY[1]);
-   std::cout << std::hex << SWITCH_TO_APPLICATION_CMD_COPY[0] << std::endl;
+   std::cout << std::hex << SWITCH_TO_APPLICATION_CMD_COPY[1] << std::endl;
 
    // pack the message into a vector
    std::vector<uint32_t> v32(std::begin(SWITCH_TO_APPLICATION_CMD_COPY), std::end(SWITCH_TO_APPLICATION_CMD_COPY));
