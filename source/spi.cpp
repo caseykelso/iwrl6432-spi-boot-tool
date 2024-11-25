@@ -337,7 +337,7 @@ void spiboot(spi_config_t config)
     uint32_t crc = calculate_crc32(v32, 0x04C11DB7, 0xFFFFFFFF, 0xFFFFFFFF, true);
     std::cout << "SwitchToApplicationCMD CRC32: " << std::hex << crc << std::endl;
 
-    uint32_t SwitchToApplicationCMD_COPY[sizeof(SwitchToApplicationCMD)];
+    uint32_t SwitchToApplicationCMD_COPY[sizeof(SwitchToApplicationCMD)/sizeof(SwitchToApplicationCMD[0])];
     std::copy(std::begin(SwitchToApplicationCMD), std::end(SwitchToApplicationCMD), std::begin(SwitchToApplicationCMD_COPY));
 
     SwitchToApplicationCMD_COPY[0] = crc;
