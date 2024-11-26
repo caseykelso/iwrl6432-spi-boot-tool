@@ -24,12 +24,6 @@ https://pimylifeup.com/raspberry-pi-spi/
 ```bash
 make ci
 ```
-
-## Incremental Build for Waffle Target
-```bash
-make build.rpi4
-```
-
 ## Incremental Build for RPI4 Target
 ```bash
 make build.rpi4
