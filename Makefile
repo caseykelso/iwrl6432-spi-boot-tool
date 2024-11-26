@@ -18,8 +18,7 @@ INSTALLED.HOST.DIR=$(INSTALLED_HOST_DIR)
 endif
 TOOLCHAIN.DIR=$(BASE.DIR)/toolchain
 
-CMAKE.TOOLCHAIN.FILE.RPI4=$(BASE.DIR)/aarch64-linux.cmake
-CMAKE.TOOLCHAIN.FILE.WAFFLE=$(BASE.DIR)/waffle-linux.cmake
+CMAKE.TOOLCHAIN.FILE.AARCH64=$(BASE.DIR)/aarch64-linux.cmake
 
 CMAKE.BIN=/usr/bin/cmake
 BUILD.DIR=$(BASE.DIR)/build
@@ -40,14 +39,7 @@ FIRMWARE.BIN=$(FIRMWARE.PREBUILT.PATH)
 APPIMAGE.SCRIPT=$(SCRIPTS.DIR)/appimageToHex.py
 HEADERS.DIR=$(BASE.DIR)/ti_headers
 
-AMBA.TOOLCHAIN.ARCHIVE=linaro-aarch64-2020.09-gcc10.2-linux5.4-x86_64.tar.xz
-AMBA.TOOLCHAIN.URL=https://buildroot-sources.s3.amazonaws.com/$(AMBA.TOOLCHAIN.ARCHIVE)
-
-toolchain.waffle: submodule
-	mkdir -p $(TOOLCHAIN.DIR)
-	cd $(TOOLCHAIN.DIR) && wget $(AMBA.TOOLCHAIN.URL)
-
-ci: firmware firmware.convert.appimage.to.hex build.waffle build.x86
+ci: firmware firmware.convert.appimage.to.hex build.x86
 
 run: .FORCE
 	$(BUILD.DIR)/xwrflasher
@@ -73,11 +65,7 @@ build.x86: .FORCE
 
 build.rpi4: .FORCE
 	rm -rf $(BUILD.DIR) && mkdir -p $(BUILD.DIR)
-	cd $(BUILD.DIR) && $(CMAKE.BIN) -DCMAKE_TOOLCHAIN_FILE=$(CMAKE.TOOLCHAIN.FILE.RPI4) -DCMAKE_PREFIX_PATH=$(INSTALLED.HOST.DIR) $(SOURCE.DIR) && VERBOSE=1 make
-
-build.waffle: .FORCE
-	rm -rf $(BUILD.DIR) && mkdir -p $(BUILD.DIR)
-	cd $(BUILD.DIR) && $(CMAKE.BIN) -DCMAKE_TOOLCHAIN_FILE=$(CMAKE.TOOLCHAIN.FILE.WAFFLE) -DCMAKE_PREFIX_PATH=$(INSTALLED.HOST.DIR) $(SOURCE.DIR) && VERBOSE=1 make
+	cd $(BUILD.DIR) && $(CMAKE.BIN) -DCMAKE_TOOLCHAIN_FILE=$(CMAKE.TOOLCHAIN.FILE.AARCH64) -DCMAKE_PREFIX_PATH=$(INSTALLED.HOST.DIR) $(SOURCE.DIR) && VERBOSE=1 make
 
 firmware: .FORCE
 	rm -f $(FIRMWARE.PREBUILT.PATH)
