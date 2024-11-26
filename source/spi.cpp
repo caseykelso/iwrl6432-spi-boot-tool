@@ -238,6 +238,8 @@ void block_until_spi_ready(const spi_config_t config)
 {
     while(is_spi_busy(config))
     {
+//        std::cout << "!" << std::endl;
+//        std::this_thread::sleep_for(std::chrono::milliseconds(10)); //config.gpio_sleep_ns));
         std::this_thread::sleep_for(std::chrono::nanoseconds(config.gpio_sleep_ns));
     }
 }
@@ -248,20 +250,27 @@ void spiboot(spi_config_t config)
 {   
     const uint32_t RX_BUFFER_SIZE     = 1024;
     const uint8_t FIRMWARE_ALIGNMENT  = 16;
-    uint32_t number_of_padding_bytes  = FIRMWARE_ALIGNMENT - (Size % FIRMWARE_ALIGNMENT); //Extra bytes to make image size multiple of 16 
-    uint32_t number_of_padding_words  = number_of_padding_bytes/4;
+    uint32_t number_of_padding_bytes  = 0; 
+    uint32_t number_of_padding_words  = 0; 
     uint32_t crc                      = 0x0;
     uint8_t  rx[RX_BUFFER_SIZE]       = {0};
 
-    //Size = 8192;
+    Size = 8192;
+    if (0 != (Size % FIRMWARE_ALIGNMENT))
+    {
+        number_of_padding_bytes = FIRMWARE_ALIGNMENT - (Size % FIRMWARE_ALIGNMENT); //Extra bytes to make image size multiple of 16
+        number_of_padding_words = number_of_padding_bytes/4;
+    }
+    std::cout << "padding: " << number_of_padding_bytes << std::endl;
 
     std::cout << "Booting via SPI ..." << std::endl;
     std::cout << "Transferring appimage via SPI ..." << std::endl;
     
     /* calculation of CRC for Continuous Image Download Command */
     calculatecrc32();
-#define STATUS_CMD 0
+#define STATUS_CMD 1
 #if STATUS_CMD
+    std::cout << "STATUS_CMD" << std::endl;
     // make a copy of the command  so that we can modify it before sending it over the SPI bus
     uint32_t GET_RBL_STATUS_CMD_COPY[sizeof(GET_RBL_STATUS_CMD)/sizeof(GET_RBL_STATUS_CMD[0])];
     std::copy(std::begin(GET_RBL_STATUS_CMD), std::end(GET_RBL_STATUS_CMD), std::begin(GET_RBL_STATUS_CMD_COPY));
@@ -285,7 +294,7 @@ void spiboot(spi_config_t config)
     block_until_spi_ready(config);
 #endif //STATUS_CMD
 
-#define CONTINUOUS_DOWNLOAD 1
+#define CONTINUOUS_DOWNLOAD 0
 #if CONTINUOUS_DOWNLOAD
     // make a copy of the command  so that we can modify it before sending it over the SPI bus
     uint32_t CONTINUOUS_IMAGE_DOWNLOAD_CMD_COPY[sizeof(CONTINUOUS_IMAGE_DOWNLOAD_CMD)/sizeof(CONTINUOUS_IMAGE_DOWNLOAD_CMD[0])];
