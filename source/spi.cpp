@@ -36,7 +36,7 @@
 #define APP_CRC_BIT_SWAP                    1
 #define APP_CRC_BYTE_SWAP                   0
 
-const uint32_t SPIDEV_MAX_BLOCK_SIZE = 2048;
+const uint32_t SPIDEV_MAX_BLOCK_SIZE = 512;
 uint8_t dummy_data[1024] = {0};
 uint32_t crcValue=0;
 
@@ -238,7 +238,7 @@ void block_until_spi_ready(const spi_config_t config)
 {
     while(is_spi_busy(config))
     {
-        std::this_thread::sleep_for(std::chrono::milliseconds(config.gpio_sleep_ms));
+        std::this_thread::sleep_for(std::chrono::nanoseconds(config.gpio_sleep_ns));
     }
 }
 
@@ -312,37 +312,54 @@ void spiboot(spi_config_t config)
     spi_transfer((uint8_t*)CONTINUOUS_IMAGE_DOWNLOAD_CMD_COPY, NULL, 32, config);
     std::cout << "waiting" << std::endl;
     block_until_spi_ready(config);
-//    spi_transfer((uint8_t*)dummy_data, NULL, 32, config);
-//    block_until_spi_ready(config);
 
 #if 1
+    uint32_t i = 0;
     // Send firmware in SPIDEV_MAX_BLOCK_SIZE chunks
-    for (uint32_t i = 0; i < Size; i = i + SPIDEV_MAX_BLOCK_SIZE)
+    for (i = 0; i < Size; i = i + SPIDEV_MAX_BLOCK_SIZE)
     {
         uint32_t block_size = SPIDEV_MAX_BLOCK_SIZE;
 
-        if (i >= Size)
+        if (Size < i + SPIDEV_MAX_BLOCK_SIZE)
         {
-            std::cout << "firmware programming stop case" << std::endl;
-            break;
-        }
-        else if ((Size - i) < SPIDEV_MAX_BLOCK_SIZE) // remainder case
-        {
-            block_size = Size - i;
-            std::cout << "firmware programming last block of size: " << block_size << std::endl;
-            //TODO: padding?
+            uint32_t remainder = Size % SPIDEV_MAX_BLOCK_SIZE;
+            std::cout << "index: " << unsigned(i) << std::endl;
+            std::cout << "remainder: " << unsigned(remainder) << std::endl;
+
+            if ((remainder != 0)) // remainder case
+            {
+                config.bits_per_word = 8;
+                std::cout << "count: " << std::hex << unsigned(i) << std::endl;
+                std::cout << "firmware programming last block of size: " << remainder << std::endl;
+                std::this_thread::sleep_for(std::chrono::milliseconds(500)); // vary the sleep here so we can easily see this write on the waveform
+                spi_transfer((uint8_t*)(image + i), NULL, remainder, config);
+                //TODO: padding?
+            }
+            else
+            {
+                std::cout << "no padding needed" << std::endl; // should be impossible to get here
+            }
+
         }
         else // send a full block
         {
             std::cout << "*" << std::endl;
+            std::cout << "count: " << std::hex << unsigned(i) << std::endl;
+            config.bits_per_word = 8;
+            spi_transfer((uint8_t*)(image + i), NULL, block_size, config);
+//            std::this_thread::sleep_for(std::chrono::milliseconds(100));
         }
-
-        std::cout << "count: " << std::hex << unsigned(i) << std::endl;
-        block_until_spi_ready(config);
-        spi_transfer((uint8_t*)(image + i), NULL, block_size, config);
     }
 
     std::cout << "after for loop" << std::endl;
+   
+    std::cout << "waiting for 6432 to be read" << std::endl; 
+    block_until_spi_ready(config);
+
+    std::cout << "reading response" << std::endl;
+    spi_transfer((uint8_t*)dummy_data, NULL, 32, config);
+
+
 #if 0
     //TODO: set size here for dummy data
     spi_transfer((uint8_t*)dummy_data, NULL, number_of_padding_words, config);
@@ -386,11 +403,12 @@ void spiboot(spi_config_t config)
     SwitchToApplicationCMD_COPY[0] = double_reversal(crc);
     SwitchToApplicationCMD_COPY[1] = reverse_16bits(SwitchToApplicationCMD_COPY[1]);
  
-    spi_transfer((uint8_t*)SwitchToApplicationCMD_COPY, NULL, 16, config);
+    config.bits_per_word = 8;
+    spi_transfer((uint8_t*)SwitchToApplicationCMD_COPY, NULL, 8, config);
     std::cout << "waiting" << std::endl;
     block_until_spi_ready(config);
-    spi_transfer((uint8_t*)dummy_data, rx, 16, config);
-    block_until_spi_ready(config);
+//    spi_transfer((uint8_t*)dummy_data, rx, 8, config);
+//    block_until_spi_ready(config);
 #endif
  
     std::cout << "Booting via SPI is completed." << std::endl;

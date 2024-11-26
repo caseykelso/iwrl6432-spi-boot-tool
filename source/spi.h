@@ -10,7 +10,7 @@ typedef struct {
 	std::string device;
 	int file_descriptor;
 	gpio_callback_t gpio_callback;
-	uint8_t gpio_sleep_ms;
+	uint8_t gpio_sleep_ns;
 } spi_config_t;
 
 bool spi_init(spi_config_t &spi_config);
