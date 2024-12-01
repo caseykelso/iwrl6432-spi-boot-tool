@@ -39,7 +39,8 @@ FIRMWARE.BIN=$(FIRMWARE.PREBUILT.PATH)
 APPIMAGE.SCRIPT=$(SCRIPTS.DIR)/appimageToHex.py
 HEADERS.DIR=$(BASE.DIR)/ti_headers
 
-ci: firmware firmware.convert.appimage.to.hex build.x86
+ci: firmware build.x86
+#ci: firmware firmware.convert.appimage.to.hex build.x86
 
 run: .FORCE
 	$(BUILD.DIR)/xwrflasher
