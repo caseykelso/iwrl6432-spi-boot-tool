@@ -256,7 +256,7 @@ void spiboot(spi_config_t config)
     uint8_t  rx[RX_BUFFER_SIZE]       = {0};
     uint32_t total_bytes_sent         = 0;
 
-    Size = 8192;
+//    Size = 8192;
     if (0 != (Size % FIRMWARE_ALIGNMENT))
     {
         number_of_padding_bytes = FIRMWARE_ALIGNMENT - (Size % FIRMWARE_ALIGNMENT); //Extra bytes to make image size multiple of 16
