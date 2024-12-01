@@ -36,7 +36,7 @@
 #define APP_CRC_BIT_SWAP                    1
 #define APP_CRC_BYTE_SWAP                   0
 
-const uint32_t SPIDEV_MAX_BLOCK_SIZE = 512;
+const uint32_t SPIDEV_MAX_BLOCK_SIZE = 8192;
 uint8_t dummy_data[1024] = {0};
 uint32_t crcValue=0;
 
@@ -82,7 +82,7 @@ void spi_transfer(uint8_t *tx, uint8_t *rx, uint32_t length, spi_config_t config
 		.speed_hz      = config.speed,
 		.delay_usecs   = config.delay,
 		.bits_per_word = config.bits_per_word,
-//                .cs_change     = 0, // has no impact on cs toggle between chunks, cs is still active, and cs_off is not available in this kernel version
+                .cs_change     = 0, // has no impact on cs toggle between chunks, cs is still active, and cs_off is not available in this kernel version
 	};
 
         // reverse bit order
@@ -254,6 +254,7 @@ void spiboot(spi_config_t config)
     uint32_t number_of_padding_words  = 0; 
     uint32_t crc                      = 0x0;
     uint8_t  rx[RX_BUFFER_SIZE]       = {0};
+    uint32_t total_bytes_sent         = 0;
 
     Size = 8192;
     if (0 != (Size % FIRMWARE_ALIGNMENT))
@@ -294,7 +295,7 @@ void spiboot(spi_config_t config)
     block_until_spi_ready(config);
 #endif //STATUS_CMD
 
-#define CONTINUOUS_DOWNLOAD 0
+#define CONTINUOUS_DOWNLOAD 1
 #if CONTINUOUS_DOWNLOAD
     // make a copy of the command  so that we can modify it before sending it over the SPI bus
     uint32_t CONTINUOUS_IMAGE_DOWNLOAD_CMD_COPY[sizeof(CONTINUOUS_IMAGE_DOWNLOAD_CMD)/sizeof(CONTINUOUS_IMAGE_DOWNLOAD_CMD[0])];
@@ -322,31 +323,41 @@ void spiboot(spi_config_t config)
     std::cout << "waiting" << std::endl;
     block_until_spi_ready(config);
 
+//    Size = Size / 2;
 #if 1
     uint32_t i = 0;
+    std::cout << "Size (decimal): " << std::dec << Size << std::endl;
     // Send firmware in SPIDEV_MAX_BLOCK_SIZE chunks
     for (i = 0; i < Size; i = i + SPIDEV_MAX_BLOCK_SIZE)
     {
         uint32_t block_size = SPIDEV_MAX_BLOCK_SIZE;
 
-        if (Size < i + SPIDEV_MAX_BLOCK_SIZE)
+        if (Size <= SPIDEV_MAX_BLOCK_SIZE)
         {
-            uint32_t remainder = Size % SPIDEV_MAX_BLOCK_SIZE;
+             block_size = Size; 
+             std::cout << "Transfer in a single block: " << block_size << std::endl;
+             std::cout << "count: " << std::hex << unsigned(i) << std::endl;
+             config.bits_per_word = 8;
+             spi_transfer((uint8_t*)(image + i), NULL, block_size, config);
+             total_bytes_sent = total_bytes_sent + block_size;
+        }
+        else if (Size < i + SPIDEV_MAX_BLOCK_SIZE)
+        {
+            uint32_t remainder = 0;
+            
             std::cout << "index: " << unsigned(i) << std::endl;
             std::cout << "remainder: " << unsigned(remainder) << std::endl;
 
             if ((remainder != 0)) // remainder case
             {
+                std::cout << "!" << std::endl;
                 config.bits_per_word = 8;
                 std::cout << "count: " << std::hex << unsigned(i) << std::endl;
                 std::cout << "firmware programming last block of size: " << remainder << std::endl;
                 std::this_thread::sleep_for(std::chrono::milliseconds(500)); // vary the sleep here so we can easily see this write on the waveform
                 spi_transfer((uint8_t*)(image + i), NULL, remainder, config);
+                total_bytes_sent = total_bytes_sent + block_size; 
                 //TODO: padding?
-            }
-            else
-            {
-                std::cout << "no padding needed" << std::endl; // should be impossible to get here
             }
 
         }
@@ -356,17 +367,26 @@ void spiboot(spi_config_t config)
             std::cout << "count: " << std::hex << unsigned(i) << std::endl;
             config.bits_per_word = 8;
             spi_transfer((uint8_t*)(image + i), NULL, block_size, config);
-//            std::this_thread::sleep_for(std::chrono::milliseconds(100));
+            total_bytes_sent = total_bytes_sent + block_size;
         }
     }
 
     std::cout << "after for loop" << std::endl;
-   
-    std::cout << "waiting for 6432 to be read" << std::endl; 
-    block_until_spi_ready(config);
+    std::cout << "total_bytes_sent: " << std::dec << total_bytes_sent << std::endl;
 
-    std::cout << "reading response" << std::endl;
+//    std::cout << "send dummy data" << std::endl;
+//    spi_transfer((uint8_t*)(dummy_data), NULL, 6, config);
+ 
+    std::this_thread::sleep_for(std::chrono::milliseconds(500));
+
+    std::cout << "waiting" << std::endl;
+    block_until_spi_ready(config);
+   
+    std::cout << "reading response!" << std::endl;
     spi_transfer((uint8_t*)dummy_data, NULL, 32, config);
+
+    std::cout << "waiting for 6432 to be ready" << std::endl; 
+    block_until_spi_ready(config);
 
 
 #if 0
