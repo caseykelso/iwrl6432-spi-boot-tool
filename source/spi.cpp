@@ -311,11 +311,6 @@ void spiboot(spi_config_t config)
 
     /* calculation of CRC for Continuous Image Download Command */
     uint32_t padded_data=16-(Size%16);
-//    CONTINUOUS_IMAGE_DOWNLOAD_CMD[4]=Size+padded_data;
- //   CONTINUOUS_IMAGE_DOWNLOAD_CMD[5]=Size;
-//    crcValue = calculate_crc32_uint8_t_array(image, Size, 0x04C11DB7, 0xFFFFFFFF, 0xFFFFFFFF, true);
-//    crcValue = crc32(crcValue, (Bytef*)continuousImageDownloadCMD, APP_CRC_PATTERN_CNT+1);
-
 
     // reverse the MSB/LSB on each 16-bit word on the SPI_CMD_TYPE and the LONG_MSG_SIZE members
     CONTINUOUS_IMAGE_DOWNLOAD_CMD_COPY[1] = double_reversal(CONTINUOUS_IMAGE_DOWNLOAD_CMD_COPY[1]);
@@ -333,22 +328,18 @@ void spiboot(spi_config_t config)
     CONTINUOUS_IMAGE_DOWNLOAD_CMD_COPY[0] = reverse_16bits(0xa83dc29f); // previously I had crc generating this but with the wrong byte order, now I'm getting the wrong crc, but moving on to the firmware transfer, will come back to this 12/03/2024
 
     CONTINUOUS_IMAGE_DOWNLOAD_CMD_COPY[1] = reverse_16bits(CONTINUOUS_IMAGE_DOWNLOAD_CMD_COPY[1]);
-//    CONTINUOUS_IMAGE_DOWNLOAD_CMD_COPY[4] = reverse_16bits(double_reversal(Size + number_of_padding_bytes)); 
-//    CONTINUOUS_IMAGE_DOWNLOAD_CMD_COPY[5] = reverse_16bits(double_reversal(Size)); // FIRMWARE_SIZE without padding
     std::cout << "CONTINUOUS_IMAGE_DOWNLOAD_CMD_COPY: " << std::hex << Size << std::endl;
     spi_transfer((uint8_t*)CONTINUOUS_IMAGE_DOWNLOAD_CMD_COPY, NULL, 32, config);
     std::cout << "waiting" << std::endl;
     block_until_spi_ready(config);
 
-#if 1
     uint32_t i = 0;
+    const uint32_t block_size = SPIDEV_MAX_BLOCK_SIZE;
     std::cout << "Size (decimal): " << std::dec << Size << std::endl;
-    // Send firmware in SPIDEV_MAX_BLOCK_SIZE chunks
 
+    // Send firmware in SPIDEV_MAX_BLOCK_SIZE chunks
     for (i = 0; i < (Size); i = i + SPIDEV_MAX_BLOCK_SIZE)
     {
-
-        uint32_t block_size = SPIDEV_MAX_BLOCK_SIZE;
 
         // stop case
         if (Size < (i + SPIDEV_MAX_BLOCK_SIZE))
@@ -399,32 +390,6 @@ void spiboot(spi_config_t config)
     std::cout << "waiting for 6432 to be ready" << std::endl; 
     block_until_spi_ready(config);
 
-
-#if 0
-    //TODO: set size here for dummy data
-    spi_transfer((uint8_t*)dummy_data, NULL, number_of_padding_words, config);
-    std::cout << "transfer dummy data: " << size << std::endl;
-    block_until_spi_ready(config);
-
-    size = 16; //TODO: is this right?
-    spi_transfer((uint8_t*)continuousImageDownloadRESP, (uint8_t*)gMcspiRxBuffer1, size, config);
-    std::cout << "transfer continuous image downoad response: " << size << std::endl;
-
-    block_until_spi_ready(config);
-
-    size = 8; //TODO: is this right?
-    spi_transfer((uint8_t*)SwitchToApplicationCMD, (uint8_t*)gMcspiRxBuffer2, size, config);
-    std::cout << "transfer switch to application command: " << size << std::endl;
-
-    block_until_spi_ready(config);	
-
-    size = 8; //TODO: is this right?
-    spi_transfer((uint8_t*)SwitchToApplicationRESP, (uint8_t*)gMcspiRxBuffer3, size, config);
-    std::cout << "transfer switch to application response: " << size << std::endl;
-
-    //TODO: put in check for success
-#endif
-#endif
 
 #endif
 
