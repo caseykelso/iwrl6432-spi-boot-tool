@@ -349,18 +349,13 @@ void spiboot(spi_config_t config)
     {
 
         uint32_t block_size = SPIDEV_MAX_BLOCK_SIZE;
-#if 0
-        if (Size <= SPIDEV_MAX_BLOCK_SIZE)
+
+        // stop case
+        if (Size < (i + SPIDEV_MAX_BLOCK_SIZE))
         {
-             block_size = Size; 
-             std::cout << "Transfer in a single block: " << block_size << std::endl;
-             std::cout << "count: " << std::hex << unsigned(i) << std::endl;
-             config.bits_per_word = 8;
-             spi_transfer((uint8_t*)(image_copy + i), NULL, block_size, config);
-             total_bytes_sent = total_bytes_sent + block_size;
+            break;
         }
-        else // send a full block
-#endif 
+
         {
             std::cout << "*" << std::endl;
             std::cout << "count: " << std::hex << unsigned(i) << std::endl;
@@ -372,7 +367,8 @@ void spiboot(spi_config_t config)
     }
 
     uint32_t remainder = Size % SPIDEV_MAX_BLOCK_SIZE;
-#if 0 
+
+    // send remaining data that doesn't align with the SPI max block size
     if (0 != remainder) 
     {
         std::cout << "index: " << unsigned(i) << std::endl;
@@ -385,13 +381,12 @@ void spiboot(spi_config_t config)
         spi_transfer((uint8_t*)(image_copy + (Size-remainder)), NULL, remainder, config);
         total_bytes_sent = total_bytes_sent + remainder;
     }
-#endif
 
     std::cout << "after for loop" << std::endl;
     std::cout << "total_bytes_sent: " << std::dec << total_bytes_sent << std::endl;
 
-//    std::cout << "send dummy data" << std::endl;
-//    spi_transfer((uint8_t*)(dummy_data), NULL, 6, config);
+    std::cout << "send dummy data" << std::endl;
+    spi_transfer((uint8_t*)(dummy_data), NULL,12, config);
  
     std::this_thread::sleep_for(std::chrono::milliseconds(500));
 
