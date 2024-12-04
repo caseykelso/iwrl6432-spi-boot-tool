@@ -393,7 +393,7 @@ void spiboot(spi_config_t config)
 
 #endif
 
-#define APPLICATION_SWITCH 0
+#define APPLICATION_SWITCH 1
 #if APPLICATION_SWITCH
     uint32_t SwitchToApplicationCMD_COPY[sizeof(SwitchToApplicationCMD)/sizeof(SwitchToApplicationCMD[0])];
     std::copy(std::begin(SwitchToApplicationCMD), std::end(SwitchToApplicationCMD), std::begin(SwitchToApplicationCMD_COPY));
@@ -412,8 +412,10 @@ void spiboot(spi_config_t config)
     spi_transfer((uint8_t*)SwitchToApplicationCMD_COPY, NULL, 8, config);
     std::cout << "waiting" << std::endl;
     block_until_spi_ready(config);
-//    spi_transfer((uint8_t*)dummy_data, rx, 8, config);
-//    block_until_spi_ready(config);
+    spi_transfer((uint8_t*)dummy_data, rx, 8, config);
+    std::cout << "send dummy data" << std::endl;
+    spi_transfer((uint8_t*)(dummy_data), NULL,12, config);
+    block_until_spi_ready(config);
 #endif
  
     std::cout << "Booting via SPI is completed." << std::endl;
