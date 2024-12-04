@@ -36,7 +36,7 @@
 #define APP_CRC_BIT_SWAP                    1
 #define APP_CRC_BYTE_SWAP                   0
 
-const uint32_t SPIDEV_MAX_BLOCK_SIZE = 8192;
+const uint32_t SPIDEV_MAX_BLOCK_SIZE = 32;
 uint8_t dummy_data[1024] = {0};
 uint32_t crcValue=0;
 
@@ -195,13 +195,6 @@ bool spi_init(spi_config_t &spi_config)
 /* CRC Calculation for Continuous Image Download Command */
 void calculatecrc32()
 {
-#if  0
-       uint32_t padded_data=16-(Size%16);
-       continuousImageDownloadCMD[4]=Size+padded_data;
-       continuousImageDownloadCMD[5]=Size;
-       crcValue = crc32(0L, Z_NULL, 0);
-       crcValue = crc32(crcValue, (Bytef*)continuousImageDownloadCMD, APP_CRC_PATTERN_CNT+1);
-#endif
 }
 
 bool is_spi_busy(const spi_config_t config)
@@ -256,7 +249,23 @@ void spiboot(spi_config_t config)
     uint8_t  rx[RX_BUFFER_SIZE]       = {0};
     uint32_t total_bytes_sent         = 0;
 
-//    Size = 8192;
+    uint8_t image_copy[sizeof(image)/sizeof(image[0])];
+    std::copy(std::begin(image), std::end(image), std::begin(image_copy));
+
+    uint16_t *image_copy_uint16 = (uint16_t*)image_copy;
+
+    for (uint32_t i = 0; i < (Size/2); ++i)
+    {
+        image_copy_uint16[i] = reverse_bytes(image_copy_uint16[i]);
+    }
+
+#if 0
+    for (uint32_t i = 0; i < Size; ++i)
+    {
+        image_copy[0] = double_reversal(image_copy[0]);
+    }
+#endif
+
     if (0 != (Size % FIRMWARE_ALIGNMENT))
     {
         number_of_padding_bytes = FIRMWARE_ALIGNMENT - (Size % FIRMWARE_ALIGNMENT); //Extra bytes to make image size multiple of 16
@@ -267,8 +276,6 @@ void spiboot(spi_config_t config)
     std::cout << "Booting via SPI ..." << std::endl;
     std::cout << "Transferring appimage via SPI ..." << std::endl;
     
-    /* calculation of CRC for Continuous Image Download Command */
-    calculatecrc32();
 #define STATUS_CMD 1
 #if STATUS_CMD
     std::cout << "STATUS_CMD" << std::endl;
@@ -301,6 +308,15 @@ void spiboot(spi_config_t config)
     uint32_t CONTINUOUS_IMAGE_DOWNLOAD_CMD_COPY[sizeof(CONTINUOUS_IMAGE_DOWNLOAD_CMD)/sizeof(CONTINUOUS_IMAGE_DOWNLOAD_CMD[0])];
     std::copy(std::begin(CONTINUOUS_IMAGE_DOWNLOAD_CMD), std::end(CONTINUOUS_IMAGE_DOWNLOAD_CMD), std::begin(CONTINUOUS_IMAGE_DOWNLOAD_CMD_COPY));
 
+
+    /* calculation of CRC for Continuous Image Download Command */
+    uint32_t padded_data=16-(Size%16);
+//    CONTINUOUS_IMAGE_DOWNLOAD_CMD[4]=Size+padded_data;
+ //   CONTINUOUS_IMAGE_DOWNLOAD_CMD[5]=Size;
+//    crcValue = calculate_crc32_uint8_t_array(image, Size, 0x04C11DB7, 0xFFFFFFFF, 0xFFFFFFFF, true);
+//    crcValue = crc32(crcValue, (Bytef*)continuousImageDownloadCMD, APP_CRC_PATTERN_CNT+1);
+
+
     // reverse the MSB/LSB on each 16-bit word on the SPI_CMD_TYPE and the LONG_MSG_SIZE members
     CONTINUOUS_IMAGE_DOWNLOAD_CMD_COPY[1] = double_reversal(CONTINUOUS_IMAGE_DOWNLOAD_CMD_COPY[1]);
     CONTINUOUS_IMAGE_DOWNLOAD_CMD_COPY[4] = double_reversal(Size + number_of_padding_bytes); // SPI_DOWNLOAD_SIZE_IN_BYTES = META_IMAGE_SIZE + padding for 16 byte alignment
@@ -313,63 +329,63 @@ void spiboot(spi_config_t config)
     crc = calculate_crc32(v32_DOWNLOAD, 0x04C11DB7, 0xFFFFFFFF, 0xFFFFFFFF, true);
 
     std::cout  << "crc: " << std::hex << crc << std::endl;
-    CONTINUOUS_IMAGE_DOWNLOAD_CMD_COPY[0] = double_reversal(crc);
+//    CONTINUOUS_IMAGE_DOWNLOAD_CMD_COPY[0] = double_reversal(crc);
+    CONTINUOUS_IMAGE_DOWNLOAD_CMD_COPY[0] = reverse_16bits(0xa83dc29f); // previously I had crc generating this but with the wrong byte order, now I'm getting the wrong crc, but moving on to the firmware transfer, will come back to this 12/03/2024
 
     CONTINUOUS_IMAGE_DOWNLOAD_CMD_COPY[1] = reverse_16bits(CONTINUOUS_IMAGE_DOWNLOAD_CMD_COPY[1]);
-    CONTINUOUS_IMAGE_DOWNLOAD_CMD_COPY[4] = reverse_16bits(double_reversal(Size + number_of_padding_bytes)); //reverse_16bits(8192); // SPI_DOWNLOAD_SIZE_IN_BYTES = META_IMAGE_SIZE + padding for 16 byte alignment
-    CONTINUOUS_IMAGE_DOWNLOAD_CMD_COPY[5] = reverse_16bits(double_reversal(Size)); // FIRMWARE_SIZE without padding
+//    CONTINUOUS_IMAGE_DOWNLOAD_CMD_COPY[4] = reverse_16bits(double_reversal(Size + number_of_padding_bytes)); 
+//    CONTINUOUS_IMAGE_DOWNLOAD_CMD_COPY[5] = reverse_16bits(double_reversal(Size)); // FIRMWARE_SIZE without padding
     std::cout << "CONTINUOUS_IMAGE_DOWNLOAD_CMD_COPY: " << std::hex << Size << std::endl;
     spi_transfer((uint8_t*)CONTINUOUS_IMAGE_DOWNLOAD_CMD_COPY, NULL, 32, config);
     std::cout << "waiting" << std::endl;
     block_until_spi_ready(config);
 
-//    Size = Size / 2;
 #if 1
     uint32_t i = 0;
     std::cout << "Size (decimal): " << std::dec << Size << std::endl;
     // Send firmware in SPIDEV_MAX_BLOCK_SIZE chunks
-    for (i = 0; i < Size; i = i + SPIDEV_MAX_BLOCK_SIZE)
-    {
-        uint32_t block_size = SPIDEV_MAX_BLOCK_SIZE;
 
+    for (i = 0; i < (Size); i = i + SPIDEV_MAX_BLOCK_SIZE)
+    {
+
+        uint32_t block_size = SPIDEV_MAX_BLOCK_SIZE;
+#if 0
         if (Size <= SPIDEV_MAX_BLOCK_SIZE)
         {
              block_size = Size; 
              std::cout << "Transfer in a single block: " << block_size << std::endl;
              std::cout << "count: " << std::hex << unsigned(i) << std::endl;
              config.bits_per_word = 8;
-             spi_transfer((uint8_t*)(image + i), NULL, block_size, config);
+             spi_transfer((uint8_t*)(image_copy + i), NULL, block_size, config);
              total_bytes_sent = total_bytes_sent + block_size;
         }
-        else if (Size < i + SPIDEV_MAX_BLOCK_SIZE)
-        {
-            uint32_t remainder = 0;
-            
-            std::cout << "index: " << unsigned(i) << std::endl;
-            std::cout << "remainder: " << unsigned(remainder) << std::endl;
-
-            if ((remainder != 0)) // remainder case
-            {
-                std::cout << "!" << std::endl;
-                config.bits_per_word = 8;
-                std::cout << "count: " << std::hex << unsigned(i) << std::endl;
-                std::cout << "firmware programming last block of size: " << remainder << std::endl;
-                std::this_thread::sleep_for(std::chrono::milliseconds(500)); // vary the sleep here so we can easily see this write on the waveform
-                spi_transfer((uint8_t*)(image + i), NULL, remainder, config);
-                total_bytes_sent = total_bytes_sent + block_size; 
-                //TODO: padding?
-            }
-
-        }
         else // send a full block
+#endif 
         {
             std::cout << "*" << std::endl;
             std::cout << "count: " << std::hex << unsigned(i) << std::endl;
             config.bits_per_word = 8;
-            spi_transfer((uint8_t*)(image + i), NULL, block_size, config);
+            spi_transfer((uint8_t*)(image_copy + i), NULL, block_size, config);
+            std::this_thread::sleep_for(std::chrono::milliseconds(20));
             total_bytes_sent = total_bytes_sent + block_size;
         }
     }
+
+    uint32_t remainder = Size % SPIDEV_MAX_BLOCK_SIZE;
+#if 0 
+    if (0 != remainder) 
+    {
+        std::cout << "index: " << unsigned(i) << std::endl;
+        std::cout << "remainder: " << unsigned(remainder) << std::endl;
+        std::cout << "!" << std::endl;
+        config.bits_per_word = 8;
+        std::cout << "count: " << std::hex << unsigned(i) << std::endl;
+        std::cout << "firmware programming last block of size: " << remainder << std::endl;
+        std::this_thread::sleep_for(std::chrono::milliseconds(500)); // vary the sleep here so we can easily see this write on the waveform
+        spi_transfer((uint8_t*)(image_copy + (Size-remainder)), NULL, remainder, config);
+        total_bytes_sent = total_bytes_sent + remainder;
+    }
+#endif
 
     std::cout << "after for loop" << std::endl;
     std::cout << "total_bytes_sent: " << std::dec << total_bytes_sent << std::endl;
