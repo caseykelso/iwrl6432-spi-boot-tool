@@ -81,7 +81,7 @@ Response
 
 ## Notes
 
-If the QSPI Flash is not populated in your design, you will also need to modify the chirp configuration to disable saving of calibration data to QSPI flash.
+If the QSPI Flash is not populated in your design, you will also need to modify the chirp configuration to disable saving and restoring of calibration data to QSPI flash.
 
 ```bash
 factoryCalibCfg: <save enable> <restore enable> <rxGain> <backoff0> <Flash offset>
