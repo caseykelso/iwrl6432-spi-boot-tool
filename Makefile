@@ -25,10 +25,12 @@ BUILD.DIR=$(BASE.DIR)/build
 GPIO.BIN=$(INSTALLED.HOST.DIR)/bin/gpio-ftdi
 SPI.BIN=$(INSTALLED.HOST.DIR)/bin/iwrflasher-spi
 
-#FIRMWARE.PREBUILD.FILENAME=mmwave_demo.release.appimage.05_05_02_00_iwrl64xx-evm
-FIRMWARE.PREBUILD.FILENAME=mmwave_demo.release.appimage.05_05_02_00_iwrl14xx-evm
+FIRMWARE.PREBUILT.FILENAME=mmwave_demo.release.appimage.05_05_02_00_iwrl64xx-evm
+#FIRMWARE.PREBUILT.FILENAME=mmwave_demo.release.appimage.05_05_02_00_iwrl64xx-evm
+#FIRMWARE.PREBUILT.FILENAME=mmwave_demo.debug.appimage.05_05_00_02_iwrl14xx-evm
+#FIRMWARE.PREBUILT.FILENAME=mmwave_demo.debug.appimage.05_05_02_00_iwrl14xx-evm
 #FIRMWARE.PREBUILT.FILENAME=motion_and_presence_detection_demo.release.appimage
-#FIRMWARE.PREBUILD.FILENAME=uart_echo.Release.appimage
+#FIRMWARE.PREBUILT.FILENAME=uart_echo.Release.appimage
 FIRMWARE.PREBUILT.URL=https://buildroot-sources.s3.us-east-1.amazonaws.com/$(FIRMWARE.PREBUILT.FILENAME)
 FIRMWARE.PREBUILT.PATH=$(DOWNLOADS.DIR)/$(FIRMWARE.PREBUILT.FILENAME)
 
