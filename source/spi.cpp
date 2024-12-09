@@ -86,7 +86,6 @@ void spi_transfer(uint8_t *tx, uint8_t *rx, uint32_t length, spi_config_t config
 	};
 
         // reverse bit order
-        // TODO: need to revisit, we do not want to mutate the tx buffer, this will need to be a copy
 #ifdef SPI_REVERSE_BIT_ORDER
         for (uint32_t i = 0; i < length; ++i)
         {
@@ -231,13 +230,10 @@ void block_until_spi_ready(const spi_config_t config)
 {
     while(is_spi_busy(config))
     {
-//        std::cout << "!" << std::endl;
-//        std::this_thread::sleep_for(std::chrono::milliseconds(10)); //config.gpio_sleep_ns));
         std::this_thread::sleep_for(std::chrono::nanoseconds(config.gpio_sleep_ns));
     }
 }
 
-//TODO: disable chip select in spidev
 /* Transferring appimage via SPI */
 void spiboot(spi_config_t config)
 {   
@@ -258,13 +254,6 @@ void spiboot(spi_config_t config)
     {
         image_copy_uint16[i] = reverse_bytes(image_copy_uint16[i]);
     }
-
-#if 0
-    for (uint32_t i = 0; i < Size; ++i)
-    {
-        image_copy[0] = double_reversal(image_copy[0]);
-    }
-#endif
 
     if (0 != (Size % FIRMWARE_ALIGNMENT))
     {
@@ -316,8 +305,6 @@ void spiboot(spi_config_t config)
     CONTINUOUS_IMAGE_DOWNLOAD_CMD_COPY[1] = double_reversal(CONTINUOUS_IMAGE_DOWNLOAD_CMD_COPY[1]);
     CONTINUOUS_IMAGE_DOWNLOAD_CMD_COPY[4] = reverse_16bits(double_reversal(Size + number_of_padding_bytes)); // SPI_DOWNLOAD_SIZE_IN_BYTES = META_IMAGE_SIZE + padding for 16 byte alignment
     CONTINUOUS_IMAGE_DOWNLOAD_CMD_COPY[5] = reverse_16bits(double_reversal(Size)); // FIRMWARE_SIZE without padding
-//    CONTINUOUS_IMAGE_DOWNLOAD_CMD_COPY[4] = reverse_16bits(CONTINUOUS_IMAGE_DOWNLOAD_CMD_COPY[4]);
-//    CONTINUOUS_IMAGE_DOWNLOAD_CMD_COPY[5] = reverse_16bits(CONTINUOUS_IMAGE_DOWNLOAD_CMD_COPY[5]);
 
     // pack the message into a vector
     std::vector<uint32_t> v32_DOWNLOAD(std::begin(CONTINUOUS_IMAGE_DOWNLOAD_CMD_COPY), std::end(CONTINUOUS_IMAGE_DOWNLOAD_CMD_COPY));
@@ -327,8 +314,6 @@ void spiboot(spi_config_t config)
 
     std::cout  << "crc: " << std::hex << crc << std::endl;
     CONTINUOUS_IMAGE_DOWNLOAD_CMD_COPY[0] = double_reversal(crc);
-//    CONTINUOUS_IMAGE_DOWNLOAD_CMD_COPY[0] = reverse_16bits(double_reversal(0xF8EF1AAE)); // previously I had crc generating this but with the wrong byte order, now I'm getting the wrong crc, but moving on to the firmware transfer, will come back to this 12/03/2024
-
     CONTINUOUS_IMAGE_DOWNLOAD_CMD_COPY[1] = reverse_16bits(CONTINUOUS_IMAGE_DOWNLOAD_CMD_COPY[1]);
     CONTINUOUS_IMAGE_DOWNLOAD_CMD_COPY[4] = reverse_16bits(CONTINUOUS_IMAGE_DOWNLOAD_CMD_COPY[4]);
     CONTINUOUS_IMAGE_DOWNLOAD_CMD_COPY[5] = reverse_16bits(CONTINUOUS_IMAGE_DOWNLOAD_CMD_COPY[5]);
