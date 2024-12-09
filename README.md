@@ -37,7 +37,7 @@ make build.x86
 ## Waveforms
 
 ### Complete Saleae Waveform Capture
-<a ref="waveform/waveform.sal" />Saleae Capture File</a>
+[Saleae Capture File](./waveform/waveform.sal)
 
 ### Full Waveform
 <img src="waveform/full-waveform.png" />
