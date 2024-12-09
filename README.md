@@ -33,3 +33,49 @@ make build.rpi4
 ```bash
 make build.x86
 ```
+
+## Waveforms
+
+### Complete Saleae Waveform Capture
+[Saleae Capture File](./waveform/waveform.sal)
+
+### Full Waveform
+<img src="waveform/full-waveform.png" />
+
+### Device Status Command & Response
+
+Command
+<img src="waveform/device_status_command.png" />
+
+Response
+<img src="waveform/device_status_command_response.png" />
+
+### Continuous Download Command & Response
+
+Command
+<img src="waveform/continuous_download_command.png" />
+
+Response
+<img src="waveform/continuous_download_response.png" />
+
+### Continuous Download Payload (Abbreviated)
+
+First Block
+<img src="waveform/continuous_download_early_block.png" />
+
+Last Complete Block
+<img src="waveform/continuous_download_late_block.png" />
+
+Final Partial Block with Padding
+<img src="waveform/continuous_download_remainder_block_and_padding.png" />
+
+
+### App Switch Command & Response
+
+Command
+<img src="waveform/app_switch_command.png" />
+
+Response
+<img src="waveform/app_switch_command_response.png" />
+
+

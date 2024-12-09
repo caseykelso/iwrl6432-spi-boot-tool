@@ -29,8 +29,6 @@ FIRMWARE.PREBUILT.FILENAME=mmwave_demo.release.appimage.05_05_02_00_iwrl64xx-evm
 #FIRMWARE.PREBUILT.FILENAME=mmwave_demo.release.appimage.05_05_02_00_iwrl64xx-evm
 #FIRMWARE.PREBUILT.FILENAME=mmwave_demo.debug.appimage.05_05_00_02_iwrl14xx-evm
 #FIRMWARE.PREBUILT.FILENAME=mmwave_demo.debug.appimage.05_05_02_00_iwrl14xx-evm
-#FIRMWARE.PREBUILT.FILENAME=motion_and_presence_detection_demo.release.appimage
-#FIRMWARE.PREBUILT.FILENAME=uart_echo.Release.appimage
 FIRMWARE.PREBUILT.URL=https://buildroot-sources.s3.us-east-1.amazonaws.com/$(FIRMWARE.PREBUILT.FILENAME)
 FIRMWARE.PREBUILT.PATH=$(DOWNLOADS.DIR)/$(FIRMWARE.PREBUILT.FILENAME)
 
@@ -43,7 +41,6 @@ FIRMWARE.BIN=$(FIRMWARE.PREBUILT.PATH)
 APPIMAGE.SCRIPT=$(SCRIPTS.DIR)/appimageToHex.py
 HEADERS.DIR=$(BASE.DIR)/ti_headers
 
-#ci: firmware build.x86
 ci: firmware firmware.convert.appimage.to.hex build.x86
 
 run: .FORCE
