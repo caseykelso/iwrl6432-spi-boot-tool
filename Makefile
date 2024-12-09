@@ -25,7 +25,8 @@ BUILD.DIR=$(BASE.DIR)/build
 GPIO.BIN=$(INSTALLED.HOST.DIR)/bin/gpio-ftdi
 SPI.BIN=$(INSTALLED.HOST.DIR)/bin/iwrflasher-spi
 
-FIRMWARE.PREBUILT.FILENAME=mmwave_demo.release.appimage.05_05_02_00_iwrl64xx-evm
+FIRMWARE.PREBUILT.FILENAME=motion_and_presence_detection_demo.release.appimage.05_05_02_00_iwrl64xx-evm
+#FIRMWARE.PREBUILT.FILENAME=mmwave_demo.release.appimage.05_05_02_00_iwrl64xx-evm
 #FIRMWARE.PREBUILT.FILENAME=mmwave_demo.release.appimage.05_05_02_00_iwrl64xx-evm
 #FIRMWARE.PREBUILT.FILENAME=mmwave_demo.debug.appimage.05_05_00_02_iwrl14xx-evm
 #FIRMWARE.PREBUILT.FILENAME=mmwave_demo.debug.appimage.05_05_02_00_iwrl14xx-evm
