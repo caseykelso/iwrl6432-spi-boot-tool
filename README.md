@@ -33,3 +33,8 @@ make build.rpi4
 ```bash
 make build.x86
 ```
+
+## Waveforms
+
+### Full Waveform
+<img src="waveform/full-waveform.png" />
