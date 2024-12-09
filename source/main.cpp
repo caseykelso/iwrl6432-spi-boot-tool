@@ -34,8 +34,6 @@ bool gpio_spi_busy()
 
 void release_resources()
 {
-    // put the IWRL6432 into reset on exit
-//    gpio_write(sensor_reset, IWRL6432_RESET_ACTIVE);
     spi_close(spi_config);
 
     if (nullptr != spi_busy)

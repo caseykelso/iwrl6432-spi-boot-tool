@@ -36,7 +36,7 @@
 #define APP_CRC_BIT_SWAP                    1
 #define APP_CRC_BYTE_SWAP                   0
 
-const uint32_t SPIDEV_MAX_BLOCK_SIZE = 32;
+const uint32_t SPIDEV_MAX_BLOCK_SIZE = 4096;
 uint8_t dummy_data[1024] = {0};
 uint32_t crcValue=0;
 
@@ -372,7 +372,7 @@ void spiboot(spi_config_t config)
     std::cout << "send dummy data" << std::endl;
     spi_transfer((uint8_t*)(dummy_data), NULL,12, config);
  
-    std::this_thread::sleep_for(std::chrono::milliseconds(500));
+    std::this_thread::sleep_for(std::chrono::milliseconds(20));
 
     std::cout << "waiting" << std::endl;
     block_until_spi_ready(config);
@@ -404,14 +404,12 @@ void spiboot(spi_config_t config)
     config.bits_per_word = 8;
     spi_transfer((uint8_t*)SwitchToApplicationCMD_COPY, NULL, 16, config);
     std::cout << "waiting" << std::endl;
-    std::this_thread::sleep_for(std::chrono::milliseconds(500));
+    std::this_thread::sleep_for(std::chrono::milliseconds(20));
     block_until_spi_ready(config);
     std::cout << "reading app switch command response" << std::endl;
     spi_transfer((uint8_t*)dummy_data, rx, 16, config);
-    std::this_thread::sleep_for(std::chrono::milliseconds(500));
-    //block_until_spi_ready(config);
+    std::this_thread::sleep_for(std::chrono::milliseconds(20));
 #endif
- 
     std::cout << "Booting via SPI is completed." << std::endl;
 }
 
