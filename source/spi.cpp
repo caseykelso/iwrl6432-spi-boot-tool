@@ -249,9 +249,6 @@ void spiboot(spi_config_t config)
     uint8_t  rx[RX_BUFFER_SIZE]       = {0};
     uint32_t total_bytes_sent         = 0;
 
-//    Size = 205252;
-//    Size = 65534;
-Size = 1;
     uint8_t image_copy[sizeof(image)/sizeof(image[0])];
     std::copy(std::begin(image), std::end(image), std::begin(image_copy));
 
@@ -317,8 +314,8 @@ Size = 1;
 
     // reverse the MSB/LSB on each 16-bit word on the SPI_CMD_TYPE and the LONG_MSG_SIZE members
     CONTINUOUS_IMAGE_DOWNLOAD_CMD_COPY[1] = double_reversal(CONTINUOUS_IMAGE_DOWNLOAD_CMD_COPY[1]);
-    CONTINUOUS_IMAGE_DOWNLOAD_CMD_COPY[4] = double_reversal(Size + number_of_padding_bytes); // SPI_DOWNLOAD_SIZE_IN_BYTES = META_IMAGE_SIZE + padding for 16 byte alignment
-    CONTINUOUS_IMAGE_DOWNLOAD_CMD_COPY[5] = double_reversal(Size); // FIRMWARE_SIZE without padding
+    CONTINUOUS_IMAGE_DOWNLOAD_CMD_COPY[4] = reverse_16bits(double_reversal(Size + number_of_padding_bytes)); // SPI_DOWNLOAD_SIZE_IN_BYTES = META_IMAGE_SIZE + padding for 16 byte alignment
+    CONTINUOUS_IMAGE_DOWNLOAD_CMD_COPY[5] = reverse_16bits(double_reversal(Size)); // FIRMWARE_SIZE without padding
 //    CONTINUOUS_IMAGE_DOWNLOAD_CMD_COPY[4] = reverse_16bits(CONTINUOUS_IMAGE_DOWNLOAD_CMD_COPY[4]);
 //    CONTINUOUS_IMAGE_DOWNLOAD_CMD_COPY[5] = reverse_16bits(CONTINUOUS_IMAGE_DOWNLOAD_CMD_COPY[5]);
 
