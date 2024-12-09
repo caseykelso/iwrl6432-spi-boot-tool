@@ -402,13 +402,14 @@ void spiboot(spi_config_t config)
     SwitchToApplicationCMD_COPY[1] = reverse_16bits(SwitchToApplicationCMD_COPY[1]);
  
     config.bits_per_word = 8;
-    spi_transfer((uint8_t*)SwitchToApplicationCMD_COPY, NULL, 8, config);
+    spi_transfer((uint8_t*)SwitchToApplicationCMD_COPY, NULL, 16, config);
     std::cout << "waiting" << std::endl;
+    std::this_thread::sleep_for(std::chrono::milliseconds(500));
     block_until_spi_ready(config);
-    spi_transfer((uint8_t*)dummy_data, rx, 8, config);
-    std::cout << "send dummy data" << std::endl;
-    spi_transfer((uint8_t*)(dummy_data), NULL,12, config);
-    block_until_spi_ready(config);
+    std::cout << "reading app switch command response" << std::endl;
+    spi_transfer((uint8_t*)dummy_data, rx, 16, config);
+    std::this_thread::sleep_for(std::chrono::milliseconds(500));
+    //block_until_spi_ready(config);
 #endif
  
     std::cout << "Booting via SPI is completed." << std::endl;
