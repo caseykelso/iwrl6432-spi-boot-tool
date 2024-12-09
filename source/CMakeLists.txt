@@ -6,5 +6,4 @@ target_link_directories(xwrflasher BEFORE PUBLIC ${CMAKE_PREFIX_PATH}/lib)
 target_link_libraries(xwrflasher gpiod pthread rt)
 set_property(TARGET xwrflasher PROPERTY CXX_STANDARD 17)
 install(TARGETS xwrflasher DESTINATION bin)
-install(FILES appimagedata.h DESTINATION include)
 
