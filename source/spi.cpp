@@ -340,8 +340,9 @@ void spiboot(spi_config_t config)
         }
 
         {
-            std::cout << "*" << std::endl;
-            std::cout << "count: " << std::hex << unsigned(i) << std::endl;
+            std::cout << "*"; // << std::endl;
+           
+            if ((i % (100*SPIDEV_MAX_BLOCK_SIZE)) == 0) { std::cout << std::endl; std::cout << "count: 0x" << std::hex << unsigned(i) << std::endl;}
             config.bits_per_word = 8;
             spi_transfer((uint8_t*)(image_copy + i), NULL, block_size, config);
             std::this_thread::sleep_for(std::chrono::milliseconds(20));
