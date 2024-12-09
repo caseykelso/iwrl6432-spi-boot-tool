@@ -249,6 +249,9 @@ void spiboot(spi_config_t config)
     uint8_t  rx[RX_BUFFER_SIZE]       = {0};
     uint32_t total_bytes_sent         = 0;
 
+//    Size = 205252;
+//    Size = 65534;
+Size = 1;
     uint8_t image_copy[sizeof(image)/sizeof(image[0])];
     std::copy(std::begin(image), std::end(image), std::begin(image_copy));
 
@@ -293,7 +296,7 @@ void spiboot(spi_config_t config)
     crc = calculate_crc32(v32_STATUS, 0x04C11DB7, 0xFFFFFFFF, 0xFFFFFFFF, true);
 
     GET_RBL_STATUS_CMD_COPY[0] = double_reversal(crc);
-
+    
     GET_RBL_STATUS_CMD_COPY[1] = reverse_16bits(GET_RBL_STATUS_CMD_COPY[1]);
     spi_transfer((uint8_t*)GET_RBL_STATUS_CMD_COPY, NULL, 16, config);
     std::cout << "waiting" << std::endl;
@@ -316,6 +319,8 @@ void spiboot(spi_config_t config)
     CONTINUOUS_IMAGE_DOWNLOAD_CMD_COPY[1] = double_reversal(CONTINUOUS_IMAGE_DOWNLOAD_CMD_COPY[1]);
     CONTINUOUS_IMAGE_DOWNLOAD_CMD_COPY[4] = double_reversal(Size + number_of_padding_bytes); // SPI_DOWNLOAD_SIZE_IN_BYTES = META_IMAGE_SIZE + padding for 16 byte alignment
     CONTINUOUS_IMAGE_DOWNLOAD_CMD_COPY[5] = double_reversal(Size); // FIRMWARE_SIZE without padding
+//    CONTINUOUS_IMAGE_DOWNLOAD_CMD_COPY[4] = reverse_16bits(CONTINUOUS_IMAGE_DOWNLOAD_CMD_COPY[4]);
+//    CONTINUOUS_IMAGE_DOWNLOAD_CMD_COPY[5] = reverse_16bits(CONTINUOUS_IMAGE_DOWNLOAD_CMD_COPY[5]);
 
     // pack the message into a vector
     std::vector<uint32_t> v32_DOWNLOAD(std::begin(CONTINUOUS_IMAGE_DOWNLOAD_CMD_COPY), std::end(CONTINUOUS_IMAGE_DOWNLOAD_CMD_COPY));
@@ -324,18 +329,23 @@ void spiboot(spi_config_t config)
     crc = calculate_crc32(v32_DOWNLOAD, 0x04C11DB7, 0xFFFFFFFF, 0xFFFFFFFF, true);
 
     std::cout  << "crc: " << std::hex << crc << std::endl;
-//    CONTINUOUS_IMAGE_DOWNLOAD_CMD_COPY[0] = double_reversal(crc);
-    CONTINUOUS_IMAGE_DOWNLOAD_CMD_COPY[0] = reverse_16bits(0xa83dc29f); // previously I had crc generating this but with the wrong byte order, now I'm getting the wrong crc, but moving on to the firmware transfer, will come back to this 12/03/2024
+    CONTINUOUS_IMAGE_DOWNLOAD_CMD_COPY[0] = double_reversal(crc);
+//    CONTINUOUS_IMAGE_DOWNLOAD_CMD_COPY[0] = reverse_16bits(double_reversal(0xF8EF1AAE)); // previously I had crc generating this but with the wrong byte order, now I'm getting the wrong crc, but moving on to the firmware transfer, will come back to this 12/03/2024
 
     CONTINUOUS_IMAGE_DOWNLOAD_CMD_COPY[1] = reverse_16bits(CONTINUOUS_IMAGE_DOWNLOAD_CMD_COPY[1]);
+    CONTINUOUS_IMAGE_DOWNLOAD_CMD_COPY[4] = reverse_16bits(CONTINUOUS_IMAGE_DOWNLOAD_CMD_COPY[4]);
+    CONTINUOUS_IMAGE_DOWNLOAD_CMD_COPY[5] = reverse_16bits(CONTINUOUS_IMAGE_DOWNLOAD_CMD_COPY[5]);
+
     std::cout << "CONTINUOUS_IMAGE_DOWNLOAD_CMD_COPY: " << std::hex << Size << std::endl;
     spi_transfer((uint8_t*)CONTINUOUS_IMAGE_DOWNLOAD_CMD_COPY, NULL, 32, config);
+
+    std::cout << "Size (decimal): " << std::dec << Size << std::endl;
+    std::cout << "Size (hex): " << std::hex << Size << std::endl;
     std::cout << "waiting" << std::endl;
     block_until_spi_ready(config);
 
     uint32_t i = 0;
     const uint32_t block_size = SPIDEV_MAX_BLOCK_SIZE;
-    std::cout << "Size (decimal): " << std::dec << Size << std::endl;
 
     // Send firmware in SPIDEV_MAX_BLOCK_SIZE chunks
     for (i = 0; i < (Size); i = i + SPIDEV_MAX_BLOCK_SIZE)
