@@ -25,8 +25,10 @@ BUILD.DIR=$(BASE.DIR)/build
 GPIO.BIN=$(INSTALLED.HOST.DIR)/bin/gpio-ftdi
 SPI.BIN=$(INSTALLED.HOST.DIR)/bin/iwrflasher-spi
 
-#FIRMWARE.PREBUILT.FILENAME=motion_and_presence_detection_demo.debug.appimage
-FIRMWARE.PREBUILD.FILENAME=uart_echo.Release.appimage
+#FIRMWARE.PREBUILD.FILENAME=mmwave_demo.release.appimage.05_05_02_00_iwrl64xx-evm
+FIRMWARE.PREBUILD.FILENAME=mmwave_demo.release.appimage.05_05_02_00_iwrl14xx-evm
+#FIRMWARE.PREBUILT.FILENAME=motion_and_presence_detection_demo.release.appimage
+#FIRMWARE.PREBUILD.FILENAME=uart_echo.Release.appimage
 FIRMWARE.PREBUILT.URL=https://buildroot-sources.s3.us-east-1.amazonaws.com/$(FIRMWARE.PREBUILT.FILENAME)
 FIRMWARE.PREBUILT.PATH=$(DOWNLOADS.DIR)/$(FIRMWARE.PREBUILT.FILENAME)
 
@@ -39,8 +41,8 @@ FIRMWARE.BIN=$(FIRMWARE.PREBUILT.PATH)
 APPIMAGE.SCRIPT=$(SCRIPTS.DIR)/appimageToHex.py
 HEADERS.DIR=$(BASE.DIR)/ti_headers
 
-ci: firmware build.x86
-#ci: firmware firmware.convert.appimage.to.hex build.x86
+#ci: firmware build.x86
+ci: firmware firmware.convert.appimage.to.hex build.x86
 
 run: .FORCE
 	$(BUILD.DIR)/xwrflasher
