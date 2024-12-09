@@ -39,7 +39,6 @@ GPIOD.DIR=$(DOWNLOADS.DIR)/gpiod
 
 FIRMWARE.BIN=$(FIRMWARE.PREBUILT.PATH)
 APPIMAGE.SCRIPT=$(SCRIPTS.DIR)/appimageToHex.py
-HEADERS.DIR=$(BASE.DIR)/ti_headers
 
 ci: firmware firmware.convert.appimage.to.hex build.x86
 
@@ -53,13 +52,6 @@ gpiod: .FORCE
 	rm -rf $(GPIOD.DIR)
 	mkdir -p $(DOWNLOADS.DIR)
 	cd $(DOWNLOADS.DIR) && wget $(GPIOD.URL) && tar xvf $(GPIOD.ARCHIVE)
-
-ti.headers: .FORCE
-	mkdir -p $(INSTALLED.HOST.DIR)/include/kernel/dpl && cp $(HEADERS.DIR)/DebugP.h $(INSTALLED.HOST.DIR)/include/kernel/dpl
-	mkdir -p $(INSTALLED.HOST.DIR)/include/drivers && cp $(HEADERS.DIR)/gpio.h $(INSTALLED.HOST.DIR)/include/drivers
-	mkdir -p $(INSTALLED.HOST.DIR)/include/drivers && cp $(HEADERS.DIR)/crc.h $(INSTALLED.HOST.DIR)/include/drivers
-	mkdir -p $(INSTALLED.HOST.DIR)/include/kernel/dpl && cp $(HEADERS.DIR)/AddrTranslateP.h $(INSTALLED.HOST.DIR)/include/kernel/dpl
-	mkdir -p $(INSTALLED.HOST.DIR)/include/drivers/hw_include && cp $(HEADERS.DIR)/soc_config.h $(INSTALLED.HOST.DIR)/include/drivers/hw_include
 
 build.x86: .FORCE
 	rm -rf $(BUILD.DIR) && mkdir -p $(BUILD.DIR)
